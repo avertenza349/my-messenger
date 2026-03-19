@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getUsers, getContacts, addContactByEmail, uploadMyAvatar } from "./api/users";
 
 import { useAuth } from "./hooks/useAuth";
@@ -26,6 +26,22 @@ export default function App() {
 
   const [newMessage, setNewMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
+
+  const handleSocketMessage = useCallback(async (data) => {
+    console.log("WS:", data);
+
+    if (data?.type !== "new_message") return;
+
+    await chats.loadChats();
+
+    if (chats.selectedChat && data.chat_id === chats.selectedChat.id) {
+      chats.setMessages((prev) => {
+        const exists = prev.some((msg) => msg.id === data.message.id);
+        if (exists) return prev;
+        return [...prev, data.message];
+      });
+    }
+  }, [chats.selectedChat, chats.loadChats, chats.setMessages]);
 
   // ===== MAP USERS =====
   const usersMap = useMemo(() => {
@@ -109,6 +125,8 @@ export default function App() {
     if (!chats.selectedChat || !newMessage.trim()) return;
 
     await chats.send(chats.selectedChat.id, newMessage);
+    await chats.loadMessages(chats.selectedChat.id);
+    await chats.loadChats();
     setNewMessage("");
   }
 
@@ -117,6 +135,8 @@ export default function App() {
     if (!chats.selectedChat || !selectedImage) return;
 
     await chats.sendImg(chats.selectedChat.id, selectedImage);
+    await chats.loadMessages(chats.selectedChat.id);
+    await chats.loadChats();
     setSelectedImage(null);
   }
 
@@ -140,13 +160,7 @@ export default function App() {
   }, [chats.selectedChat]);
 
   // ===== WEBSOCKET =====
-  useWebSocket(
-    localStorage.getItem("access_token"),
-    (data) => {
-      console.log("WS:", data);
-      // тут потом можно обновлять чаты/сообщения
-    }
-  );
+  useWebSocket(localStorage.getItem("access_token"), handleSocketMessage);
 
   // ===== AUTH SCREEN =====
   if (!auth.currentUser) {

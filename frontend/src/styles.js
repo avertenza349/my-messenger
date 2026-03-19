@@ -1,24 +1,32 @@
 export const styles = {
   appContainer: {
     display: "flex",
-    minHeight: "100vh",
+    height: "100vh",
+    overflow: "hidden",
     background: "#f8fafc",
   },
 
   sidebar: {
     width: 410,
+    height: "100vh",
     padding: 16,
     borderRight: "1px solid #d1d5db",
     background: "#f3f4f6",
     boxSizing: "border-box",
     overflowY: "auto",
+    flexShrink: 0,
   },
 
   sidebarHeader: {
+    position: "sticky",
+    top: 0,
+    zIndex: 20,
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 16,
+    paddingBottom: 12,
+    background: "#f3f4f6",
   },
 
   userCard: {
@@ -175,27 +183,44 @@ export const styles = {
 
   chatArea: {
     flex: 1,
+    height: "100vh",
+    minWidth: 0,
+    minHeight: 0,
     padding: 16,
     display: "flex",
     flexDirection: "column",
+    overflow: "hidden",
     gap: 12,
   },
 
   chatHeader: {
+    flexShrink: 0,
     display: "flex",
     alignItems: "center",
     gap: 12,
     paddingBottom: 12,
     borderBottom: "1px solid #d1d5db",
+    background: "#f8fafc",
   },
 
   messagesArea: {
     flex: 1,
+    minHeight: 0,
     display: "flex",
     flexDirection: "column",
     gap: 12,
     overflowY: "auto",
     padding: "12px 0",
+  },
+
+  chatFooter: {
+    flexShrink: 0,
+    paddingTop: 12,
+    borderTop: "1px solid #d1d5db",
+    background: "#f8fafc",
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
   },
 
   messageBubble: {
