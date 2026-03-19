@@ -9,7 +9,7 @@ export const styles = {
   sidebar: {
     width: 410,
     height: "100vh",
-    padding: 16,
+    padding: "0 16px 16px 16px",
     borderRight: "1px solid #d1d5db",
     background: "#f3f4f6",
     boxSizing: "border-box",
@@ -17,10 +17,16 @@ export const styles = {
     flexShrink: 0,
   },
 
-  sidebarHeader: {
+  sidebarTop: {
     position: "sticky",
     top: 0,
-    zIndex: 20,
+    zIndex: 30,
+    background: "#f3f4f6",
+    paddingTop: 16,
+    paddingBottom: 12,
+  },
+
+  sidebarHeader: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",

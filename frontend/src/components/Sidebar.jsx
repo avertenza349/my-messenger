@@ -29,34 +29,36 @@ export default function Sidebar({
 
   return (
     <aside style={styles.sidebar}>
-      <div style={styles.sidebarHeader}>
-        <h2 style={{ margin: 0 }}>Чаты</h2>
-        <button style={styles.smallButton} onClick={onLogout}>
-          Выйти
-        </button>
-      </div>
+      <div style={styles.sidebarTop}>
+        <div style={styles.sidebarHeader}>
+          <h2 style={{ margin: 0 }}>Чаты</h2>
+          <button style={styles.smallButton} onClick={onLogout}>
+            Выйти
+          </button>
+        </div>
 
-      <div style={styles.userCard}>
-        <label style={styles.avatarUploadLabel}>
-          {avatarSrc ? (
-            <img src={avatarSrc} alt="Аватар" style={styles.avatarImage} />
-          ) : (
-            <div style={styles.avatarPlaceholder}>
-              {currentUser.username?.[0]?.toUpperCase() || "U"}
-            </div>
-          )}
+        <div style={styles.userCard}>
+          <label style={styles.avatarUploadLabel}>
+            {avatarSrc ? (
+              <img src={avatarSrc} alt="Аватар" style={styles.avatarImage} />
+            ) : (
+              <div style={styles.avatarPlaceholder}>
+                {currentUser.username?.[0]?.toUpperCase() || "U"}
+              </div>
+            )}
 
-          <input
-            type="file"
-            accept="image/*"
-            style={styles.hiddenFileInput}
-            onChange={onAvatarChange}
-          />
-        </label>
+            <input
+              type="file"
+              accept="image/*"
+              style={styles.hiddenFileInput}
+              onChange={onAvatarChange}
+            />
+          </label>
 
-        <div>
-          <div style={{ fontWeight: 700 }}>{currentUser.username}</div>
-          <div style={styles.mutedText}>{currentUser.email}</div>
+          <div>
+            <div style={{ fontWeight: 700 }}>{currentUser.username}</div>
+            <div style={styles.mutedText}>{currentUser.email}</div>
+          </div>
         </div>
       </div>
 
