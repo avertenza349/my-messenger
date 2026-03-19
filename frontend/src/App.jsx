@@ -24,6 +24,8 @@ export default function App() {
     password: "",
   });
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [mobileView, setMobileView] = useState("chats");
   const [currentUser, setCurrentUser] = useState(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -70,43 +72,43 @@ export default function App() {
   }
 
   async function loadChats() {
-  try {
-    const chatList = await getMyChats();
+    try {
+      const chatList = await getMyChats();
 
-    const sortedChats = [...chatList].sort((a, b) => {
-      const aDate = a.last_message?.created_at || "";
-      const bDate = b.last_message?.created_at || "";
-      return bDate.localeCompare(aDate);
-    });
-
-    setChats((prevChats) => {
-      const prevUnreadMap = {};
-      prevChats.forEach((chat) => {
-        prevUnreadMap[chat.id] = chat.unreadCount || 0;
+      const sortedChats = [...chatList].sort((a, b) => {
+        const aDate = a.last_message?.created_at || "";
+        const bDate = b.last_message?.created_at || "";
+        return bDate.localeCompare(aDate);
       });
 
-      return sortedChats.map((chat) => ({
-        ...chat,
-        unreadCount: prevUnreadMap[chat.id] || 0,
-      }));
-    });
+      setChats((prevChats) => {
+        const prevUnreadMap = {};
+        prevChats.forEach((chat) => {
+          prevUnreadMap[chat.id] = chat.unreadCount || 0;
+        });
 
-    if (sortedChats.length > 0 && !selectedChat) {
-      setSelectedChat(sortedChats[0]);
-    }
+        return sortedChats.map((chat) => ({
+          ...chat,
+          unreadCount: prevUnreadMap[chat.id] || 0,
+        }));
+      });
 
-    if (selectedChat) {
-      const updatedSelected = sortedChats.find(
-        (chat) => chat.id === selectedChat.id
-      );
-      if (updatedSelected) {
-        setSelectedChat(updatedSelected);
+      if (sortedChats.length > 0 && !selectedChat) {
+        setSelectedChat(sortedChats[0]);
       }
+
+      if (selectedChat) {
+        const updatedSelected = sortedChats.find(
+          (chat) => chat.id === selectedChat.id
+        );
+        if (updatedSelected) {
+          setSelectedChat(updatedSelected);
+        }
+      }
+    } catch (err) {
+      setError(err.message);
     }
-  } catch (err) {
-    setError(err.message);
   }
-}
 
   async function loadMessages(chatId) {
     try {
@@ -118,20 +120,20 @@ export default function App() {
   }
 
   useEffect(() => {
-  if (selectedChat) {
-    loadMessages(selectedChat.id);
+    if (selectedChat) {
+      loadMessages(selectedChat.id);
 
-    setChats((prevChats) =>
-      prevChats.map((chat) =>
-        chat.id === selectedChat.id
-          ? { ...chat, unreadCount: 0 }
-          : chat
-      )
-    );
-  } else {
-    setMessages([]);
-  }
-}, [selectedChat]);
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === selectedChat.id
+            ? { ...chat, unreadCount: 0 }
+            : chat
+        )
+      );
+    } else {
+      setMessages([]);
+    }
+  }, [selectedChat]);
 
   useEffect(() => {
     if (selectedChat) {
@@ -142,105 +144,119 @@ export default function App() {
   }, [selectedChat]);
 
   useEffect(() => {
-  const token = localStorage.getItem("access_token");
-  if (!token || !currentUser) return;
+    function handleResize() {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
 
-  if (wsRef.current) {
-    wsRef.current.close();
-  }
-
-  const ws = new WebSocket(`ws://127.0.0.1:8000/ws?token=${token}`);
-  wsRef.current = ws;
-
-  let pingInterval = null;
-
-  ws.onopen = () => {
-    console.log("Global WebSocket connected");
-
-    pingInterval = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send("ping");
+      if (!mobile) {
+        setMobileView("chats");
       }
-    }, 20000);
-  };
+    }
 
-  ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-  if (data.type === "new_message") {
-    const incomingMessage = data.message;
-    const incomingChatId = data.chat_id;
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (!token || !currentUser) return;
 
-    setChats((prevChats) => {
-      const updated = prevChats.map((chat) => {
-        if (chat.id === incomingChatId) {
-          const isActiveChat = selectedChat && selectedChat.id === incomingChatId;
-          const isOwnMessage = incomingMessage.sender_id === currentUser.id;
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
 
-          return {
-            ...chat,
-            last_message: incomingMessage,
-            unreadCount: isActiveChat || isOwnMessage
-              ? 0
-              : (chat.unreadCount || 0) + 1,
-          };
+    const ws = new WebSocket(`ws://127.0.0.1:8000/ws?token=${token}`);
+    wsRef.current = ws;
+
+    let pingInterval = null;
+
+    ws.onopen = () => {
+      console.log("Global WebSocket connected");
+
+      pingInterval = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send("ping");
         }
-        return chat;
-      });
+      }, 20000);
+    };
 
-      updated.sort((a, b) => {
-        const aDate = a.last_message?.created_at || "";
-        const bDate = b.last_message?.created_at || "";
-        return bDate.localeCompare(aDate);
-      });
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
 
-      return [...updated];
-    });
+      if (data.type === "new_message") {
+        const incomingMessage = data.message;
+        const incomingChatId = data.chat_id;
 
-    setSelectedChat((prevSelectedChat) => {
-      if (!prevSelectedChat) return prevSelectedChat;
-      if (prevSelectedChat.id === incomingChatId) {
-        return {
-          ...prevSelectedChat,
-          last_message: incomingMessage,
-        };
+        setChats((prevChats) => {
+          const updated = prevChats.map((chat) => {
+            if (chat.id === incomingChatId) {
+              const isActiveChat = selectedChat && selectedChat.id === incomingChatId;
+              const isOwnMessage = incomingMessage.sender_id === currentUser.id;
+
+              return {
+                ...chat,
+                last_message: incomingMessage,
+                unreadCount: isActiveChat || isOwnMessage
+                  ? 0
+                  : (chat.unreadCount || 0) + 1,
+              };
+            }
+            return chat;
+          });
+
+          updated.sort((a, b) => {
+            const aDate = a.last_message?.created_at || "";
+            const bDate = b.last_message?.created_at || "";
+            return bDate.localeCompare(aDate);
+          });
+
+          return [...updated];
+        });
+
+        setSelectedChat((prevSelectedChat) => {
+          if (!prevSelectedChat) return prevSelectedChat;
+          if (prevSelectedChat.id === incomingChatId) {
+            return {
+              ...prevSelectedChat,
+              last_message: incomingMessage,
+            };
+          }
+          return prevSelectedChat;
+        });
+
+        setMessages((prevMessages) => {
+          if (!selectedChat || selectedChat.id !== incomingChatId) {
+            return prevMessages;
+          }
+
+          const alreadyExists = prevMessages.some(
+            (msg) => msg.id === incomingMessage.id
+          );
+          if (alreadyExists) return prevMessages;
+
+          return [...prevMessages, incomingMessage];
+        });
       }
-      return prevSelectedChat;
-    });
+    };
 
-    setMessages((prevMessages) => {
-      if (!selectedChat || selectedChat.id !== incomingChatId) {
-        return prevMessages;
+    ws.onerror = (event) => {
+      console.log("Global WebSocket error", event);
+    };
+
+    ws.onclose = () => {
+      console.log("Global WebSocket disconnected");
+      if (pingInterval) {
+        clearInterval(pingInterval);
       }
+    };
 
-      const alreadyExists = prevMessages.some(
-        (msg) => msg.id === incomingMessage.id
-      );
-      if (alreadyExists) return prevMessages;
-
-      return [...prevMessages, incomingMessage];
-    });
-  }
-};
-
-  ws.onerror = (event) => {
-    console.log("Global WebSocket error", event);
-  };
-
-  ws.onclose = () => {
-    console.log("Global WebSocket disconnected");
-    if (pingInterval) {
-      clearInterval(pingInterval);
-    }
-  };
-
-  return () => {
-    if (pingInterval) {
-      clearInterval(pingInterval);
-    }
-    ws.close();
-  };
-}, [currentUser, selectedChat]);
+    return () => {
+      if (pingInterval) {
+        clearInterval(pingInterval);
+      }
+      ws.close();
+    };
+  }, [currentUser, selectedChat]);
 
   async function handleRegister(e) {
     e.preventDefault();
@@ -277,36 +293,36 @@ export default function App() {
   }
 
   async function handleSendMessage(e) {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!selectedChat || !newMessage.trim()) return;
+    if (!selectedChat || !newMessage.trim()) return;
 
-  setError("");
-  setMessage("");
+    setError("");
+    setMessage("");
 
-  try {
-    await sendMessage(selectedChat.id, newMessage);
-    setNewMessage("");
-  } catch (err) {
-    setError(err.message);
+    try {
+      await sendMessage(selectedChat.id, newMessage);
+      setNewMessage("");
+    } catch (err) {
+      setError(err.message);
+    }
   }
-}
 
   async function handleSendImage(e) {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!selectedChat || !selectedImage) return;
+    if (!selectedChat || !selectedImage) return;
 
-  setError("");
-  setMessage("");
+    setError("");
+    setMessage("");
 
-  try {
-    await sendImage(selectedChat.id, selectedImage);
-    setSelectedImage(null);
-  } catch (err) {
-    setError(err.message);
+    try {
+      await sendImage(selectedChat.id, selectedImage);
+      setSelectedImage(null);
+    } catch (err) {
+      setError(err.message);
+    }
   }
-}  
 
   async function handleCreatePrivateChat(e) {
     e.preventDefault();
@@ -322,6 +338,9 @@ export default function App() {
       const chat = await createPrivateChat(privateUserId);
       await loadChats();
       setSelectedChat(chat);
+      if (isMobile) {
+        setMobileView("chat");
+      }
       setPrivateUserId("");
       setMessage("Личный чат создан");
     } catch (err) {
@@ -343,6 +362,9 @@ export default function App() {
       const chat = await createGroupChat(groupTitle, groupParticipantIds);
       await loadChats();
       setSelectedChat(chat);
+      if (isMobile) {
+        setMobileView("chat");
+      }
       setGroupTitle("");
       setGroupParticipantIds([]);
       setMessage("Групповой чат создан");
@@ -461,194 +483,222 @@ export default function App() {
   }
 
   return (
-    <div style={styles.layout}>
-      <aside style={styles.sidebar}>
-        <div style={styles.sidebarHeader}>
-          <h2 style={{ margin: 0 }}>Чаты</h2>
-          <button onClick={handleLogout} style={styles.smallButton}>
-            Выйти
-          </button>
-        </div>
-
-        <div style={styles.userBox}>
-          <div>
-            <b>{currentUser.username}</b>
-          </div>
-          <div style={styles.muted}>{currentUser.email}</div>
-        </div>
-
-        <form onSubmit={handleCreatePrivateChat} style={styles.createForm}>
-          <div style={styles.formTitle}>Новый личный чат</div>
-          <select
-            value={privateUserId}
-            onChange={(e) => setPrivateUserId(e.target.value)}
-            style={styles.input}
-          >
-            <option value="">Выбери пользователя</option>
-            {users.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.username} ({user.email})
-              </option>
-            ))}
-          </select>
-          <button type="submit" style={styles.smallButton}>
-            Создать
-          </button>
-        </form>
-
-        <form onSubmit={handleCreateGroupChat} style={styles.createForm}>
-          <div style={styles.formTitle}>Новая группа</div>
-          <input
-            type="text"
-            placeholder="Название группы"
-            value={groupTitle}
-            onChange={(e) => setGroupTitle(e.target.value)}
-            style={styles.input}
-          />
-
-          <div style={styles.participantsBox}>
-            {users.length === 0 ? (
-              <div style={styles.muted}>Нет доступных пользователей</div>
-            ) : (
-              users.map((user) => (
-                <label key={user.id} style={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    checked={groupParticipantIds.includes(user.id)}
-                    onChange={() => toggleGroupParticipant(user.id)}
-                  />
-                  <span>
-                    {user.username} ({user.email})
-                  </span>
-                </label>
-              ))
-            )}
+    <div
+      style={{
+        ...styles.layout,
+        gridTemplateColumns: isMobile ? "1fr" : "380px 1fr",
+      }}
+    >
+      {(!isMobile || mobileView === "chats") && (
+        <aside style={styles.sidebar}>
+          <div style={styles.sidebarHeader}>
+            <h2 style={{ margin: 0 }}>Чаты</h2>
+            <button onClick={handleLogout} style={styles.smallButton}>
+              Выйти
+            </button>
           </div>
 
-          <button type="submit" style={styles.smallButton}>
-            Создать группу
-          </button>
-        </form>
-
-        <div style={styles.chatList}>
-          {chats.length === 0 ? (
-            <p style={styles.muted}>Пока нет чатов</p>
-          ) : (
-            chats.map((chat) => (
-              <button
-  key={chat.id}
-  onClick={() => setSelectedChat(chat)}
-  style={{
-    ...styles.chatItem,
-    background:
-      selectedChat?.id === chat.id ? "#dbeafe" : "#ffffff",
-  }}
->
-  <div style={styles.chatTopRow}>
-    <div style={styles.chatTitle}>{getChatDisplayName(chat)}</div>
-
-    {chat.unreadCount > 0 && (
-      <div style={styles.unreadBadge}>{chat.unreadCount}</div>
-    )}
-  </div>
-
-  <div style={styles.muted}>
-    {chat.is_group
-      ? chat.participants.map((p) => p.username).join(", ")
-      : "Личный чат"}
-  </div>
-
-  <div style={styles.lastMessagePreview}>
-    {chat.last_message
-      ? chat.last_message.content
-      : "Пока нет сообщений"}
-  </div>
-</button>
-            ))
-          )}
-        </div>
-      </aside>
-
-      <main style={styles.chatArea}>
-        {!selectedChat ? (
-          <div style={styles.emptyState}>Выбери чат слева</div>
-        ) : (
-          <>
-            <div style={styles.chatHeader}>
-              <h2 style={{ margin: 0 }}>{getChatDisplayName(selectedChat)}</h2>
+          <div style={styles.userBox}>
+            <div>
+              <b>{currentUser.username}</b>
             </div>
+            <div style={styles.muted}>{currentUser.email}</div>
+          </div>
 
-            <div style={styles.messagesBox}>
-              {messages.length === 0 ? (
-                <p style={styles.muted}>Пока нет сообщений</p>
+          <form onSubmit={handleCreatePrivateChat} style={styles.createForm}>
+            <div style={styles.formTitle}>Новый личный чат</div>
+            <select
+              value={privateUserId}
+              onChange={(e) => setPrivateUserId(e.target.value)}
+              style={styles.input}
+            >
+              <option value="">Выбери пользователя</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.username} ({user.email})
+                </option>
+              ))}
+            </select>
+            <button type="submit" style={styles.smallButton}>
+              Создать
+            </button>
+          </form>
+
+          <form onSubmit={handleCreateGroupChat} style={styles.createForm}>
+            <div style={styles.formTitle}>Новая группа</div>
+            <input
+              type="text"
+              placeholder="Название группы"
+              value={groupTitle}
+              onChange={(e) => setGroupTitle(e.target.value)}
+              style={styles.input}
+            />
+
+            <div style={styles.participantsBox}>
+              {users.length === 0 ? (
+                <div style={styles.muted}>Нет доступных пользователей</div>
               ) : (
-                messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    style={{
-                      ...styles.messageBubble,
-                      alignSelf:
-                        msg.sender_id === currentUser.id
-                          ? "flex-end"
-                          : "flex-start",
-                      background:
-                        msg.sender_id === currentUser.id
-                          ? "#dcfce7"
-                          : "#f1f5f9",
-                    }}
-                  >
-                    <div style={styles.messageMeta}>
-  {msg.sender_id === currentUser.id
-    ? "Ты"
-    : usersMap[msg.sender_id]?.username ||
-      `User #${msg.sender_id}`}
-</div>
-
-{msg.message_type === "image" && msg.image_url ? (
-  <img
-    src={`http://127.0.0.1:8000${msg.image_url}`}
-    alt="uploaded"
-    style={styles.chatImage}
-  />
-) : (
-  <div>{msg.content}</div>
-)}
-                  </div>
+                users.map((user) => (
+                  <label key={user.id} style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={groupParticipantIds.includes(user.id)}
+                      onChange={() => toggleGroupParticipant(user.id)}
+                    />
+                    <span>
+                      {user.username} ({user.email})
+                    </span>
+                  </label>
                 ))
               )}
             </div>
 
-            <div style={styles.composerWrapper}>
-  <form onSubmit={handleSendMessage} style={styles.messageForm}>
-    <input
-      type="text"
-      placeholder="Введите сообщение..."
-      value={newMessage}
-      onChange={(e) => setNewMessage(e.target.value)}
-      style={styles.input}
-    />
-    <button type="submit" style={styles.button}>
-      Отправить
-    </button>
-  </form>
+            <button type="submit" style={styles.smallButton}>
+              Создать группу
+            </button>
+          </form>
 
-  <form onSubmit={handleSendImage} style={styles.imageForm}>
-    <input
-      type="file"
-      accept="image/*"
-      onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
-    />
-    <button type="submit" style={styles.smallButton} disabled={!selectedImage}>
-      Отправить картинку
-    </button>
-  </form>
-</div>
-          </>
-        )}
+          <div style={styles.chatList}>
+            {chats.length === 0 ? (
+              <p style={styles.muted}>Пока нет чатов</p>
+            ) : (
+              chats.map((chat) => (
+                <button
+                  key={chat.id}
+                  onClick={() => {
+                    setSelectedChat(chat);
+                    if (isMobile) {
+                      setMobileView("chat");
+                    }
+                  }}
+                  style={{
+                    ...styles.chatItem,
+                    background:
+                      selectedChat?.id === chat.id ? "#dbeafe" : "#ffffff",
+                  }}
+                >
+                  <div style={styles.chatTopRow}>
+                    <div style={styles.chatTitle}>{getChatDisplayName(chat)}</div>
 
-        {error && <p style={styles.error}>{error}</p>}
-        {message && <p style={styles.success}>{message}</p>}
-      </main>
+                    {chat.unreadCount > 0 && (
+                      <div style={styles.unreadBadge}>{chat.unreadCount}</div>
+                    )}
+                  </div>
+
+                  <div style={styles.muted}>
+                    {chat.is_group
+                      ? chat.participants.map((p) => p.username).join(", ")
+                      : "Личный чат"}
+                  </div>
+
+                  <div style={styles.lastMessagePreview}>
+                    {chat.last_message
+                      ? chat.last_message.content || "Изображение"
+                      : "Пока нет сообщений"}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </aside>
+      )}
+
+      {(!isMobile || mobileView === "chat") && (
+        <main style={styles.chatArea}>
+          {!selectedChat ? (
+            <div style={styles.emptyState}>Выбери чат слева</div>
+          ) : (
+            <>
+              <div style={styles.chatHeader}>
+                <div style={styles.chatHeaderInner}>
+                  {isMobile && (
+                    <button
+                      onClick={() => setMobileView("chats")}
+                      style={styles.smallButton}
+                    >
+                      Назад
+                    </button>
+                  )}
+                  <h2 style={{ margin: 0 }}>{getChatDisplayName(selectedChat)}</h2>
+                </div>
+              </div>
+
+              <div style={styles.messagesBox}>
+                {messages.length === 0 ? (
+                  <p style={styles.muted}>Пока нет сообщений</p>
+                ) : (
+                  messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      style={{
+                        ...styles.messageBubble,
+                        alignSelf:
+                          msg.sender_id === currentUser.id
+                            ? "flex-end"
+                            : "flex-start",
+                        background:
+                          msg.sender_id === currentUser.id
+                            ? "#dcfce7"
+                            : "#f1f5f9",
+                      }}
+                    >
+                      <div style={styles.messageMeta}>
+                        {msg.sender_id === currentUser.id
+                          ? "Ты"
+                          : usersMap[msg.sender_id]?.username ||
+                          `User #${msg.sender_id}`}
+                      </div>
+
+                      {msg.message_type === "image" && msg.image_url ? (
+                        <img
+                          src={`http://127.0.0.1:8000${msg.image_url}`}
+                          alt="uploaded"
+                          style={styles.chatImage}
+                        />
+                      ) : (
+                        <div>{msg.content}</div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div style={styles.composerWrapper}>
+                <form onSubmit={handleSendMessage} style={styles.messageForm}>
+                  <input
+                    type="text"
+                    placeholder="Введите сообщение..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    style={styles.input}
+                  />
+                  <button type="submit" style={styles.button}>
+                    Отправить
+                  </button>
+                </form>
+
+                <form onSubmit={handleSendImage} style={styles.imageForm}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
+                  />
+                  <button
+                    type="submit"
+                    style={styles.smallButton}
+                    disabled={!selectedImage}
+                  >
+                    Отправить картинку
+                  </button>
+                </form>
+              </div>
+            </>
+          )}
+
+          {error && <p style={styles.error}>{error}</p>}
+          {message && <p style={styles.success}>{message}</p>}
+        </main>
+      )}
     </div>
   );
 }
@@ -677,6 +727,8 @@ const styles = {
     flexDirection: "column",
     gap: "12px",
     overflowY: "auto",
+    height: "100vh",
+    boxSizing: "border-box",
   },
   sidebarHeader: {
     display: "flex",
@@ -729,6 +781,8 @@ const styles = {
     flexDirection: "column",
     padding: "16px",
     background: "#ffffff",
+    height: "100vh",
+    boxSizing: "border-box",
   },
   chatHeader: {
     paddingBottom: "12px",
@@ -824,46 +878,52 @@ const styles = {
     fontSize: "14px",
   },
   chatTopRow: {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: "8px",
-},
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "8px",
+  },
 
-composerWrapper: {
-  display: "flex",
-  flexDirection: "column",
-  gap: "10px",
-  paddingTop: "12px",
-  borderTop: "1px solid #e5e7eb",
-},
+  composerWrapper: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+    paddingTop: "12px",
+    borderTop: "1px solid #e5e7eb",
+  },
 
-imageForm: {
-  display: "flex",
-  gap: "12px",
-  alignItems: "center",
-  flexWrap: "wrap",
-},
+  imageForm: {
+    display: "flex",
+    gap: "12px",
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
 
-chatImage: {
-  maxWidth: "280px",
-  maxHeight: "280px",
-  borderRadius: "10px",
-  display: "block",
-},
+  chatImage: {
+    maxWidth: "280px",
+    maxHeight: "280px",
+    borderRadius: "10px",
+    display: "block",
+  },
 
-unreadBadge: {
-  minWidth: "22px",
-  height: "22px",
-  borderRadius: "999px",
-  background: "#2563eb",
-  color: "#fff",
-  fontSize: "12px",
-  fontWeight: "bold",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "0 6px",
-  flexShrink: 0,
-},
+  chatHeaderInner: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+  },
+
+  unreadBadge: {
+    minWidth: "22px",
+    height: "22px",
+    borderRadius: "999px",
+    background: "#2563eb",
+    color: "#fff",
+    fontSize: "12px",
+    fontWeight: "bold",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "0 6px",
+    flexShrink: 0,
+  },
 };
