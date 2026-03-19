@@ -8,7 +8,8 @@ import {
   createPrivateChat,
   createGroupChat,
 } from "./api/chats";
-import { getUsers } from "./api/users";
+import { getUsers, getContacts, addContactByEmail } from "./api/users";
+import "./App.css";
 
 export default function App() {
   const wsRef = useRef(null);
@@ -26,11 +27,14 @@ export default function App() {
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [mobileView, setMobileView] = useState("chats");
+
   const [currentUser, setCurrentUser] = useState(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   const [users, setUsers] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [contactEmail, setContactEmail] = useState("");
 
   const [chats, setChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
@@ -38,7 +42,6 @@ export default function App() {
   const [newMessage, setNewMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
 
-  const [privateUserId, setPrivateUserId] = useState("");
   const [groupTitle, setGroupTitle] = useState("");
   const [groupParticipantIds, setGroupParticipantIds] = useState([]);
 
@@ -47,8 +50,11 @@ export default function App() {
     users.forEach((user) => {
       map[user.id] = user;
     });
+    contacts.forEach((user) => {
+      map[user.id] = user;
+    });
     return map;
-  }, [users]);
+  }, [users, contacts]);
 
   async function loadCurrentUser() {
     try {
@@ -71,10 +77,18 @@ export default function App() {
     }
   }
 
+  async function loadContacts() {
+    try {
+      const contactList = await getContacts();
+      setContacts(contactList);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   async function loadChats() {
     try {
       const chatList = await getMyChats();
-
       const sortedChats = [...chatList].sort((a, b) => {
         const aDate = a.last_message?.created_at || "";
         const bDate = b.last_message?.created_at || "";
@@ -99,7 +113,7 @@ export default function App() {
 
       if (selectedChat) {
         const updatedSelected = sortedChats.find(
-          (chat) => chat.id === selectedChat.id
+          (chat) => chat.id === selectedChat.id,
         );
         if (updatedSelected) {
           setSelectedChat(updatedSelected);
@@ -120,34 +134,9 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (selectedChat) {
-      loadMessages(selectedChat.id);
-
-      setChats((prevChats) =>
-        prevChats.map((chat) =>
-          chat.id === selectedChat.id
-            ? { ...chat, unreadCount: 0 }
-            : chat
-        )
-      );
-    } else {
-      setMessages([]);
-    }
-  }, [selectedChat]);
-
-  useEffect(() => {
-    if (selectedChat) {
-      loadMessages(selectedChat.id);
-    } else {
-      setMessages([]);
-    }
-  }, [selectedChat]);
-
-  useEffect(() => {
     function handleResize() {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
-
       if (!mobile) {
         setMobileView("chats");
       }
@@ -156,6 +145,19 @@ export default function App() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    if (selectedChat) {
+      loadMessages(selectedChat.id);
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === selectedChat.id ? { ...chat, unreadCount: 0 } : chat,
+        ),
+      );
+    } else {
+      setMessages([]);
+    }
+  }, [selectedChat]);
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -167,12 +169,9 @@ export default function App() {
 
     const ws = new WebSocket(`ws://127.0.0.1:8000/ws?token=${token}`);
     wsRef.current = ws;
-
     let pingInterval = null;
 
     ws.onopen = () => {
-      console.log("Global WebSocket connected");
-
       pingInterval = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send("ping");
@@ -190,15 +189,17 @@ export default function App() {
         setChats((prevChats) => {
           const updated = prevChats.map((chat) => {
             if (chat.id === incomingChatId) {
-              const isActiveChat = selectedChat && selectedChat.id === incomingChatId;
+              const isActiveChat =
+                selectedChat && selectedChat.id === incomingChatId;
               const isOwnMessage = incomingMessage.sender_id === currentUser.id;
 
               return {
                 ...chat,
                 last_message: incomingMessage,
-                unreadCount: isActiveChat || isOwnMessage
-                  ? 0
-                  : (chat.unreadCount || 0) + 1,
+                unreadCount:
+                  isActiveChat || isOwnMessage
+                    ? 0
+                    : (chat.unreadCount || 0) + 1,
               };
             }
             return chat;
@@ -230,7 +231,7 @@ export default function App() {
           }
 
           const alreadyExists = prevMessages.some(
-            (msg) => msg.id === incomingMessage.id
+            (msg) => msg.id === incomingMessage.id,
           );
           if (alreadyExists) return prevMessages;
 
@@ -239,12 +240,7 @@ export default function App() {
       }
     };
 
-    ws.onerror = (event) => {
-      console.log("Global WebSocket error", event);
-    };
-
     ws.onclose = () => {
-      console.log("Global WebSocket disconnected");
       if (pingInterval) {
         clearInterval(pingInterval);
       }
@@ -283,7 +279,7 @@ export default function App() {
 
       const user = await loadCurrentUser();
       if (user) {
-        await Promise.all([loadUsers(), loadChats()]);
+        await Promise.all([loadUsers(), loadContacts(), loadChats()]);
       }
 
       setMessage("Вход выполнен");
@@ -292,57 +288,46 @@ export default function App() {
     }
   }
 
-  async function handleSendMessage(e) {
-    e.preventDefault();
-
-    if (!selectedChat || !newMessage.trim()) return;
-
-    setError("");
-    setMessage("");
-
-    try {
-      await sendMessage(selectedChat.id, newMessage);
-      setNewMessage("");
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
-  async function handleSendImage(e) {
-    e.preventDefault();
-
-    if (!selectedChat || !selectedImage) return;
-
-    setError("");
-    setMessage("");
-
-    try {
-      await sendImage(selectedChat.id, selectedImage);
-      setSelectedImage(null);
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
-  async function handleCreatePrivateChat(e) {
+  async function handleAddContact(e) {
     e.preventDefault();
     setError("");
     setMessage("");
 
-    if (!privateUserId) {
-      setError("Выбери пользователя");
+    if (!contactEmail.trim()) {
+      setError("Введи почту пользователя");
       return;
     }
 
     try {
-      const chat = await createPrivateChat(privateUserId);
+      await addContactByEmail(contactEmail.trim());
+      await loadContacts();
+      setContactEmail("");
+      setMessage("Контакт добавлен");
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleCreatePrivateChat(e, targetUserId) {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+
+    if (!targetUserId) {
+      setError("Не выбран контакт");
+      return;
+    }
+
+    try {
+      const chat = await createPrivateChat(targetUserId);
       await loadChats();
       setSelectedChat(chat);
+
       if (isMobile) {
         setMobileView("chat");
       }
-      setPrivateUserId("");
-      setMessage("Личный чат создан");
+
+      setMessage("Личный чат открыт");
     } catch (err) {
       setError(err.message);
     }
@@ -362,12 +347,44 @@ export default function App() {
       const chat = await createGroupChat(groupTitle, groupParticipantIds);
       await loadChats();
       setSelectedChat(chat);
+
       if (isMobile) {
         setMobileView("chat");
       }
+
       setGroupTitle("");
       setGroupParticipantIds([]);
       setMessage("Групповой чат создан");
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleSendMessage(e) {
+    e.preventDefault();
+    if (!selectedChat || !newMessage.trim()) return;
+
+    setError("");
+    setMessage("");
+
+    try {
+      await sendMessage(selectedChat.id, newMessage);
+      setNewMessage("");
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleSendImage(e) {
+    e.preventDefault();
+    if (!selectedChat || !selectedImage) return;
+
+    setError("");
+    setMessage("");
+
+    try {
+      await sendImage(selectedChat.id, selectedImage);
+      setSelectedImage(null);
     } catch (err) {
       setError(err.message);
     }
@@ -377,6 +394,7 @@ export default function App() {
     localStorage.removeItem("access_token");
     setCurrentUser(null);
     setUsers([]);
+    setContacts([]);
     setChats([]);
     setSelectedChat(null);
     setMessages([]);
@@ -389,9 +407,7 @@ export default function App() {
     }
 
     const otherUser = chat.participants.find((p) => p.id !== currentUser.id);
-
     if (!otherUser) return `Чат #${chat.id}`;
-
     return otherUser.username;
   }
 
@@ -399,16 +415,16 @@ export default function App() {
     setGroupParticipantIds((prev) =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
+        : [...prev, userId],
     );
   }
 
   if (!currentUser) {
     return (
-      <div style={styles.authContainer}>
+      <div style={styles.authWrapper}>
         <h1>Мой мессенджер</h1>
 
-        <div style={styles.switcher}>
+        <div style={styles.authSwitch}>
           <button onClick={() => setMode("login")} style={styles.button}>
             Логин
           </button>
@@ -483,87 +499,97 @@ export default function App() {
   }
 
   return (
-    <div
-      style={{
-        ...styles.layout,
-        gridTemplateColumns: isMobile ? "1fr" : "380px 1fr",
-      }}
-    >
+    <div style={styles.appContainer}>
       {(!isMobile || mobileView === "chats") && (
         <aside style={styles.sidebar}>
           <div style={styles.sidebarHeader}>
-            <h2 style={{ margin: 0 }}>Чаты</h2>
+            <h2>Чаты</h2>
             <button onClick={handleLogout} style={styles.smallButton}>
               Выйти
             </button>
           </div>
 
-          <div style={styles.userBox}>
-            <div>
-              <b>{currentUser.username}</b>
-            </div>
-            <div style={styles.muted}>{currentUser.email}</div>
+          <div style={styles.userCard}>
+            <strong>{currentUser.username}</strong>
+            <div>{currentUser.email}</div>
           </div>
 
-          <form onSubmit={handleCreatePrivateChat} style={styles.createForm}>
-            <div style={styles.formTitle}>Новый личный чат</div>
-            <select
-              value={privateUserId}
-              onChange={(e) => setPrivateUserId(e.target.value)}
-              style={styles.input}
-            >
-              <option value="">Выбери пользователя</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.username} ({user.email})
-                </option>
-              ))}
-            </select>
-            <button type="submit" style={styles.smallButton}>
-              Создать
-            </button>
-          </form>
+          <div style={styles.block}>
+            <h3>Новый личный чат</h3>
 
-          <form onSubmit={handleCreateGroupChat} style={styles.createForm}>
-            <div style={styles.formTitle}>Новая группа</div>
-            <input
-              type="text"
-              placeholder="Название группы"
-              value={groupTitle}
-              onChange={(e) => setGroupTitle(e.target.value)}
-              style={styles.input}
-            />
+            <form onSubmit={handleAddContact} style={styles.contactForm}>
+              <input
+                type="email"
+                placeholder="Почта пользователя"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                style={styles.input}
+              />
+              <button type="submit" style={styles.fullButton}>
+                Добавить в контакты
+              </button>
+            </form>
 
-            <div style={styles.participantsBox}>
-              {users.length === 0 ? (
-                <div style={styles.muted}>Нет доступных пользователей</div>
+            <div style={styles.contactsList}>
+              {contacts.length === 0 ? (
+                <p style={styles.mutedText}>Пока нет контактов</p>
               ) : (
-                users.map((user) => (
-                  <label key={user.id} style={styles.checkboxLabel}>
-                    <input
-                      type="checkbox"
-                      checked={groupParticipantIds.includes(user.id)}
-                      onChange={() => toggleGroupParticipant(user.id)}
-                    />
-                    <span>
-                      {user.username} ({user.email})
-                    </span>
-                  </label>
+                contacts.map((user) => (
+                  <div
+                    key={user.id}
+                    style={styles.contactItem}
+                    onClick={(e) => handleCreatePrivateChat(e, user.id)}
+                  >
+                    <strong>{user.username}</strong>
+                    <div>{user.email}</div>
+                  </div>
                 ))
               )}
             </div>
+          </div>
 
-            <button type="submit" style={styles.smallButton}>
-              Создать группу
-            </button>
-          </form>
+          <div style={styles.block}>
+            <h3>Новая группа</h3>
+            <form onSubmit={handleCreateGroupChat}>
+              <input
+                type="text"
+                placeholder="Название группы"
+                value={groupTitle}
+                onChange={(e) => setGroupTitle(e.target.value)}
+                style={styles.input}
+              />
+
+              <div style={styles.scrollList}>
+                {users.length === 0 ? (
+                  <p style={styles.mutedText}>Нет доступных пользователей</p>
+                ) : (
+                  users.map((user) => (
+                    <label key={user.id} style={styles.checkboxItem}>
+                      <input
+                        type="checkbox"
+                        checked={groupParticipantIds.includes(user.id)}
+                        onChange={() => toggleGroupParticipant(user.id)}
+                      />
+                      <span>
+                        {user.username} ({user.email})
+                      </span>
+                    </label>
+                  ))
+                )}
+              </div>
+
+              <button type="submit" style={styles.fullButton}>
+                Создать группу
+              </button>
+            </form>
+          </div>
 
           <div style={styles.chatList}>
             {chats.length === 0 ? (
-              <p style={styles.muted}>Пока нет чатов</p>
+              <p>Пока нет чатов</p>
             ) : (
               chats.map((chat) => (
-                <button
+                <div
                   key={chat.id}
                   onClick={() => {
                     setSelectedChat(chat);
@@ -577,26 +603,25 @@ export default function App() {
                       selectedChat?.id === chat.id ? "#dbeafe" : "#ffffff",
                   }}
                 >
-                  <div style={styles.chatTopRow}>
-                    <div style={styles.chatTitle}>{getChatDisplayName(chat)}</div>
-
+                  <div style={styles.chatTitleRow}>
+                    <strong>{getChatDisplayName(chat)}</strong>
                     {chat.unreadCount > 0 && (
-                      <div style={styles.unreadBadge}>{chat.unreadCount}</div>
+                      <span style={styles.unreadBadge}>
+                        {chat.unreadCount}
+                      </span>
                     )}
                   </div>
-
-                  <div style={styles.muted}>
+                  <div style={styles.chatMeta}>
                     {chat.is_group
                       ? chat.participants.map((p) => p.username).join(", ")
                       : "Личный чат"}
                   </div>
-
-                  <div style={styles.lastMessagePreview}>
+                  <div style={styles.chatPreview}>
                     {chat.last_message
                       ? chat.last_message.content || "Изображение"
                       : "Пока нет сообщений"}
                   </div>
-                </button>
+                </div>
               ))
             )}
           </div>
@@ -610,22 +635,20 @@ export default function App() {
           ) : (
             <>
               <div style={styles.chatHeader}>
-                <div style={styles.chatHeaderInner}>
-                  {isMobile && (
-                    <button
-                      onClick={() => setMobileView("chats")}
-                      style={styles.smallButton}
-                    >
-                      Назад
-                    </button>
-                  )}
-                  <h2 style={{ margin: 0 }}>{getChatDisplayName(selectedChat)}</h2>
-                </div>
+                {isMobile && (
+                  <button
+                    onClick={() => setMobileView("chats")}
+                    style={styles.smallButton}
+                  >
+                    Назад
+                  </button>
+                )}
+                <h2>{getChatDisplayName(selectedChat)}</h2>
               </div>
 
-              <div style={styles.messagesBox}>
+              <div style={styles.messagesArea}>
                 {messages.length === 0 ? (
-                  <p style={styles.muted}>Пока нет сообщений</p>
+                  <p>Пока нет сообщений</p>
                 ) : (
                   messages.map((msg) => (
                     <div
@@ -639,21 +662,21 @@ export default function App() {
                         background:
                           msg.sender_id === currentUser.id
                             ? "#dcfce7"
-                            : "#f1f5f9",
+                            : "#ffffff",
                       }}
                     >
-                      <div style={styles.messageMeta}>
+                      <div style={styles.messageAuthor}>
                         {msg.sender_id === currentUser.id
                           ? "Ты"
                           : usersMap[msg.sender_id]?.username ||
-                          `User #${msg.sender_id}`}
+                            `User #${msg.sender_id}`}
                       </div>
 
                       {msg.message_type === "image" && msg.image_url ? (
                         <img
                           src={`http://127.0.0.1:8000${msg.image_url}`}
-                          alt="uploaded"
-                          style={styles.chatImage}
+                          alt="Изображение"
+                          style={styles.messageImage}
                         />
                       ) : (
                         <div>{msg.content}</div>
@@ -663,35 +686,35 @@ export default function App() {
                 )}
               </div>
 
-              <div style={styles.composerWrapper}>
-                <form onSubmit={handleSendMessage} style={styles.messageForm}>
-                  <input
-                    type="text"
-                    placeholder="Введите сообщение..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    style={styles.input}
-                  />
-                  <button type="submit" style={styles.button}>
-                    Отправить
-                  </button>
-                </form>
+              <form onSubmit={handleSendMessage} style={styles.messageForm}>
+                <input
+                  type="text"
+                  placeholder="Введите сообщение..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  style={{ ...styles.input, flex: 1 }}
+                />
+                <button type="submit" style={styles.button}>
+                  Отправить
+                </button>
+              </form>
 
-                <form onSubmit={handleSendImage} style={styles.imageForm}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
-                  />
-                  <button
-                    type="submit"
-                    style={styles.smallButton}
-                    disabled={!selectedImage}
-                  >
-                    Отправить картинку
-                  </button>
-                </form>
-              </div>
+              <form onSubmit={handleSendImage} style={styles.imageForm}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    setSelectedImage(e.target.files?.[0] || null)
+                  }
+                />
+                <button
+                  type="submit"
+                  style={styles.button}
+                  disabled={!selectedImage}
+                >
+                  Отправить картинку
+                </button>
+              </form>
             </>
           )}
 
@@ -704,226 +727,221 @@ export default function App() {
 }
 
 const styles = {
-  authContainer: {
-    maxWidth: "420px",
-    margin: "40px auto",
-    padding: "24px",
-    border: "1px solid #ccc",
-    borderRadius: "12px",
-    fontFamily: "Arial, sans-serif",
-    background: "#fff",
-  },
-  layout: {
-    display: "grid",
-    gridTemplateColumns: "380px 1fr",
-    height: "100vh",
-    fontFamily: "Arial, sans-serif",
+  appContainer: {
+    display: "flex",
+    minHeight: "100vh",
+    background: "#f8fafc",
   },
   sidebar: {
-    borderRight: "1px solid #ddd",
-    padding: "16px",
-    background: "#f8fafc",
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-    overflowY: "auto",
-    height: "100vh",
+    width: 410,
+    padding: 16,
+    borderRight: "1px solid #d1d5db",
+    background: "#f3f4f6",
     boxSizing: "border-box",
+    overflowY: "auto",
   },
   sidebarHeader: {
     display: "flex",
+    alignItems: "center",
     justifyContent: "space-between",
-    alignItems: "center",
+    marginBottom: 16,
   },
-  userBox: {
-    padding: "12px",
-    borderRadius: "10px",
+  userCard: {
+    border: "1px solid #d1d5db",
+    borderRadius: 12,
     background: "#fff",
-    border: "1px solid #e5e7eb",
+    padding: 16,
+    marginBottom: 12,
+    textAlign: "center",
   },
-  createForm: {
-    padding: "12px",
-    borderRadius: "10px",
+  block: {
+    border: "1px solid #d1d5db",
+    borderRadius: 12,
     background: "#fff",
-    border: "1px solid #e5e7eb",
+    padding: 12,
+    marginBottom: 14,
+  },
+  contactForm: {
     display: "flex",
     flexDirection: "column",
-    gap: "10px",
+    gap: 10,
+    marginBottom: 12,
   },
-  formTitle: {
-    fontWeight: "bold",
-    fontSize: "14px",
-  },
-  participantsBox: {
+  contactsList: {
     display: "flex",
     flexDirection: "column",
-    gap: "8px",
-    maxHeight: "160px",
+    gap: 10,
+    maxHeight: 260,
     overflowY: "auto",
-    border: "1px solid #e5e7eb",
-    borderRadius: "8px",
-    padding: "8px",
-    background: "#fff",
+    marginBottom: 4,
   },
-  checkboxLabel: {
+  contactItem: {
+    border: "1px solid #d1d5db",
+    borderRadius: 10,
+    padding: 12,
+    cursor: "pointer",
+    background: "#fff",
     display: "flex",
-    gap: "8px",
+    flexDirection: "column",
+    gap: 4,
+  },
+  fullButton: {
+    width: "100%",
+    padding: 12,
+    border: "1px solid #cbd5e1",
+    borderRadius: 8,
+    background: "#fff",
+    cursor: "pointer",
+  },
+  scrollList: {
+    border: "1px solid #d1d5db",
+    borderRadius: 8,
+    padding: 10,
+    maxHeight: 180,
+    overflowY: "auto",
+    marginBottom: 12,
+  },
+  checkboxItem: {
+    display: "flex",
     alignItems: "center",
-    fontSize: "14px",
+    gap: 8,
+    marginBottom: 8,
   },
   chatList: {
     display: "flex",
     flexDirection: "column",
-    gap: "10px",
+    gap: 10,
+  },
+  chatItem: {
+    border: "1px solid #cbd5e1",
+    borderRadius: 12,
+    padding: 12,
+    cursor: "pointer",
+  },
+  chatTitleRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
+  unreadBadge: {
+    minWidth: 24,
+    height: 24,
+    borderRadius: 999,
+    background: "#2563eb",
+    color: "#fff",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 12,
+    padding: "0 8px",
+  },
+  chatMeta: {
+    fontSize: 14,
+    color: "#64748b",
+    marginBottom: 6,
+  },
+  chatPreview: {
+    fontSize: 14,
+    color: "#334155",
   },
   chatArea: {
+    flex: 1,
+    padding: 16,
     display: "flex",
     flexDirection: "column",
-    padding: "16px",
-    background: "#ffffff",
-    height: "100vh",
-    boxSizing: "border-box",
+    gap: 12,
   },
   chatHeader: {
-    paddingBottom: "12px",
-    borderBottom: "1px solid #e5e7eb",
-    marginBottom: "12px",
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    paddingBottom: 12,
+    borderBottom: "1px solid #d1d5db",
   },
-  messagesBox: {
+  messagesArea: {
     flex: 1,
     display: "flex",
     flexDirection: "column",
-    gap: "10px",
+    gap: 12,
     overflowY: "auto",
     padding: "12px 0",
   },
   messageBubble: {
-    maxWidth: "60%",
-    padding: "10px 12px",
-    borderRadius: "12px",
-    border: "1px solid #ddd",
+    maxWidth: 320,
+    padding: 12,
+    borderRadius: 12,
+    border: "1px solid #d1d5db",
   },
-  messageMeta: {
-    fontSize: "12px",
-    color: "#64748b",
-    marginBottom: "4px",
+  messageAuthor: {
+    fontSize: 13,
+    color: "#475569",
+    marginBottom: 6,
+  },
+  messageImage: {
+    width: "100%",
+    borderRadius: 8,
   },
   messageForm: {
     display: "flex",
-    gap: "12px",
-    paddingTop: "12px",
-    borderTop: "1px solid #e5e7eb",
+    gap: 12,
   },
-  chatItem: {
-    border: "1px solid #ddd",
-    borderRadius: "10px",
-    padding: "12px",
-    textAlign: "left",
-    cursor: "pointer",
+  imageForm: {
+    display: "flex",
+    gap: 12,
+    alignItems: "center",
   },
-  chatTitle: {
-    fontWeight: "bold",
-    marginBottom: "4px",
+  authWrapper: {
+    maxWidth: 420,
+    margin: "60px auto",
+    padding: 20,
   },
-  lastMessagePreview: {
-    color: "#475569",
-    fontSize: "13px",
-    marginTop: "6px",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-  emptyState: {
-    margin: "auto",
-    color: "#64748b",
-    fontSize: "18px",
+  authSwitch: {
+    display: "flex",
+    gap: 8,
+    marginBottom: 16,
   },
   form: {
     display: "flex",
     flexDirection: "column",
-    gap: "12px",
-    marginTop: "20px",
+    gap: 12,
   },
   input: {
-    padding: "12px",
-    fontSize: "16px",
     width: "100%",
+    padding: 12,
+    borderRadius: 8,
+    border: "1px solid #cbd5e1",
     boxSizing: "border-box",
   },
   button: {
-    padding: "12px",
-    fontSize: "16px",
+    padding: "12px 16px",
+    borderRadius: 8,
+    border: "1px solid #cbd5e1",
+    background: "#fff",
     cursor: "pointer",
   },
   smallButton: {
-    padding: "10px 12px",
-    fontSize: "14px",
+    padding: "8px 12px",
+    borderRadius: 8,
+    border: "1px solid #cbd5e1",
+    background: "#fff",
     cursor: "pointer",
   },
-  switcher: {
-    display: "flex",
-    gap: "10px",
-    marginBottom: "20px",
-  },
-  success: {
-    color: "green",
-    marginTop: "16px",
-  },
-  error: {
-    color: "red",
-    marginTop: "16px",
-  },
-  muted: {
+  mutedText: {
     color: "#64748b",
-    fontSize: "14px",
   },
-  chatTopRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "8px",
-  },
-
-  composerWrapper: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-    paddingTop: "12px",
-    borderTop: "1px solid #e5e7eb",
-  },
-
-  imageForm: {
-    display: "flex",
-    gap: "12px",
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-
-  chatImage: {
-    maxWidth: "280px",
-    maxHeight: "280px",
-    borderRadius: "10px",
-    display: "block",
-  },
-
-  chatHeaderInner: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  },
-
-  unreadBadge: {
-    minWidth: "22px",
-    height: "22px",
-    borderRadius: "999px",
-    background: "#2563eb",
-    color: "#fff",
-    fontSize: "12px",
-    fontWeight: "bold",
+  emptyState: {
+    flex: 1,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "0 6px",
-    flexShrink: 0,
+    color: "#64748b",
+  },
+  success: {
+    color: "green",
+  },
+  error: {
+    color: "crimson",
   },
 };
