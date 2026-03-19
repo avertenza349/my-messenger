@@ -72,19 +72,16 @@ export function useAuth() {
   return {
     mode,
     setMode,
-
     registerForm,
     setRegisterForm,
-
     loginForm,
     setLoginForm,
-
     currentUser,
+    setCurrentUser,
     error,
     message,
     setError,
     setMessage,
-
     loadCurrentUser,
     login,
     register,

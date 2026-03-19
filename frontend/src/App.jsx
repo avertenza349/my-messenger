@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getUsers, getContacts, addContactByEmail } from "./api/users";
+import { getUsers, getContacts, addContactByEmail, uploadMyAvatar } from "./api/users";
 
 import { useAuth } from "./hooks/useAuth";
 import { useChats } from "./hooks/useChats";
@@ -11,6 +11,7 @@ import ChatWindow from "./components/ChatWindow";
 
 import { styles } from "./styles";
 import "./App.css";
+
 
 export default function App() {
   const auth = useAuth();
@@ -85,6 +86,22 @@ export default function App() {
     await chats.createGroup(chats.groupTitle, chats.groupParticipantIds);
 
     if (isMobile) setMobileView("chat");
+  }
+
+  async function handleAvatarChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const updatedUser = await uploadMyAvatar(file);
+      auth.setCurrentUser(updatedUser);
+      auth.setMessage("Аватар обновлён");
+      auth.setError("");
+    } catch (err) {
+      auth.setError(err.message || "Не удалось загрузить аватар");
+    }
+
+    e.target.value = "";
   }
 
   async function handleSendMessage(e) {
@@ -168,6 +185,7 @@ export default function App() {
           onCreateGroupChat={handleCreateGroup}
           chats={chats.chats}
           selectedChat={chats.selectedChat}
+          onAvatarChange={handleAvatarChange}
           onSelectChat={(chat) => {
             chats.setSelectedChat(chat);
             if (isMobile) setMobileView("chat");

@@ -1,4 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import os
+import shutil
+from pathlib import Path
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -9,9 +14,55 @@ from app.utils.security import get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
 
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+UPLOADS_DIR = BASE_DIR / "uploads" / "avatars"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+
 
 @router.get("/me", response_model=UserResponse)
 def read_current_user(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.post("/me/avatar", response_model=UserResponse)
+def upload_my_avatar(
+    avatar: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not avatar.content_type or not avatar.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Можно загружать только изображения")
+
+    ext = Path(avatar.filename or "").suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail="Разрешены только: .jpg, .jpeg, .png, .webp, .gif",
+        )
+
+    filename = f"user_{current_user.id}_{uuid4().hex}{ext}"
+    file_path = UPLOADS_DIR / filename
+
+    with file_path.open("wb") as buffer:
+        shutil.copyfileobj(avatar.file, buffer)
+
+    # удаляем старый файл, если он был загружен ранее
+    if current_user.avatar_url:
+        old_name = Path(current_user.avatar_url).name
+        old_path = UPLOADS_DIR / old_name
+        if old_path.exists():
+            try:
+                old_path.unlink()
+            except OSError:
+                pass
+
+    current_user.avatar_url = f"/uploads/avatars/{filename}"
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+
     return current_user
 
 

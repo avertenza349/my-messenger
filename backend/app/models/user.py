@@ -13,3 +13,5 @@ class User(Base):
     is_verified = Column(Boolean, default=False)
     verification_token = Column(String, nullable=True, unique=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    avatar_url = Column(String, nullable=True)

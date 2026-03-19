@@ -20,3 +20,24 @@ export async function removeContact(contactUserId) {
     method: "DELETE",
   });
 }
+
+export async function uploadMyAvatar(file) {
+  const token = localStorage.getItem("access_token");
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  const response = await fetch("http://127.0.0.1:8000/users/me/avatar", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Не удалось загрузить аватар");
+  }
+
+  return response.json();
+}

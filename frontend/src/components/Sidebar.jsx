@@ -21,44 +21,81 @@ export default function Sidebar({
   onSelectChat,
   getChatDisplayName,
   onLogout,
+  onAvatarChange,
 }) {
+  const avatarSrc = currentUser?.avatar_url
+    ? `http://127.0.0.1:8000${currentUser.avatar_url}`
+    : null;
+
   return (
     <aside style={styles.sidebar}>
       <div style={styles.sidebarHeader}>
-        <h2>Чаты</h2>
-        <button onClick={onLogout} style={styles.smallButton}>
+        <h2 style={{ margin: 0 }}>Чаты</h2>
+        <button style={styles.smallButton} onClick={onLogout}>
           Выйти
         </button>
       </div>
 
       <div style={styles.userCard}>
-        <strong>{currentUser.username}</strong>
-        <div>{currentUser.email}</div>
+        <label style={styles.avatarUploadLabel}>
+          {avatarSrc ? (
+            <img src={avatarSrc} alt="Аватар" style={styles.avatarImage} />
+          ) : (
+            <div style={styles.avatarPlaceholder}>
+              {currentUser.username?.[0]?.toUpperCase() || "U"}
+            </div>
+          )}
+
+          <input
+            type="file"
+            accept="image/*"
+            style={styles.hiddenFileInput}
+            onChange={onAvatarChange}
+          />
+        </label>
+
+        <div>
+          <div style={{ fontWeight: 700 }}>{currentUser.username}</div>
+          <div style={styles.mutedText}>{currentUser.email}</div>
+        </div>
       </div>
 
-      <ContactList
-        contacts={contacts}
-        contactEmail={contactEmail}
-        setContactEmail={setContactEmail}
-        onAddContact={onAddContact}
-        onOpenPrivateChat={onOpenPrivateChat}
-      />
+      <div style={styles.block}>
+        <form style={styles.contactForm} onSubmit={onAddContact}>
+          <input
+            style={styles.input}
+            type="email"
+            placeholder="Почта контакта"
+            value={contactEmail}
+            onChange={(e) => setContactEmail(e.target.value)}
+          />
+          <button style={styles.button} type="submit">
+            Добавить контакт
+          </button>
+        </form>
 
-      <GroupCreator
-        groupTitle={groupTitle}
-        setGroupTitle={setGroupTitle}
-        users={users}
-        groupParticipantIds={groupParticipantIds}
-        onToggleGroupParticipant={onToggleGroupParticipant}
-        onCreateGroupChat={onCreateGroupChat}
-      />
+        <ContactList contacts={contacts} onOpenPrivateChat={onOpenPrivateChat} />
+      </div>
 
-      <ChatList
-        chats={chats}
-        selectedChat={selectedChat}
-        onSelectChat={onSelectChat}
-        getChatDisplayName={getChatDisplayName}
-      />
+      <div style={styles.block}>
+        <GroupCreator
+          groupTitle={groupTitle}
+          setGroupTitle={setGroupTitle}
+          users={users}
+          groupParticipantIds={groupParticipantIds}
+          onToggleGroupParticipant={onToggleGroupParticipant}
+          onCreateGroupChat={onCreateGroupChat}
+        />
+      </div>
+
+      <div style={styles.block}>
+        <ChatList
+          chats={chats}
+          selectedChat={selectedChat}
+          onSelectChat={onSelectChat}
+          getChatDisplayName={getChatDisplayName}
+        />
+      </div>
     </aside>
   );
 }
