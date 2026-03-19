@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.db import get_db
 from app.models.user import User
+import secrets
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -55,3 +56,6 @@ def get_current_user(
         raise credentials_exception
 
     return user
+
+def generate_verification_token():
+    return secrets.token_urlsafe(32)
