@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 
+
 class UserCreate(BaseModel):
     email: EmailStr
     username: str = Field(min_length=3, max_length=50)
@@ -19,6 +20,10 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ContactCreate(BaseModel):
+    email: EmailStr
 
 
 class TokenResponse(BaseModel):
