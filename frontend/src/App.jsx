@@ -4,6 +4,7 @@ import {
   getContacts,
   addContactByEmail,
   uploadMyAvatar,
+  deleteContact,
 } from "./api/users";
 import { useAuth } from "./hooks/useAuth";
 import { useChats } from "./hooks/useChats";
@@ -66,7 +67,6 @@ export default function App() {
     }
   }
 
-  // 🔥 ВОТ ТУТ ГЛАВНОЕ ИЗМЕНЕНИЕ
   async function handleAddContact(email) {
     if (!email?.trim()) {
       return { ok: false, error: "Введите email" };
@@ -101,6 +101,21 @@ export default function App() {
           ? "Пользователь не найден"
           : rawMessage || "Не удалось добавить контакт";
 
+      auth.setError(message);
+      return { ok: false, error: message };
+    }
+  }
+
+  async function handleDeleteContact(userId) {
+    try {
+      await deleteContact(userId);
+      await loadContacts();
+
+      auth.setMessage("Контакт удалён");
+      auth.setError("");
+      return { ok: true };
+    } catch (err) {
+      const message = err?.message || "Не удалось удалить контакт";
       auth.setError(message);
       return { ok: false, error: message };
     }
@@ -302,6 +317,7 @@ export default function App() {
           contacts={contacts}
           users={users}
           onAddContact={handleAddContact}
+          onDeleteContact={handleDeleteContact}
           onOpenPrivateChat={handleOpenPrivateChat}
           groupTitle={chats.groupTitle}
           setGroupTitle={chats.setGroupTitle}

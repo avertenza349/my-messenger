@@ -7,6 +7,7 @@ export default function Sidebar({
   currentUser,
   contacts,
   onAddContact,
+  onDeleteContact,
   onOpenPrivateChat,
   groupTitle,
   setGroupTitle,
@@ -31,6 +32,11 @@ export default function Sidebar({
   const [isAddingContact, setIsAddingContact] = useState(false);
 
   const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
+
+  const [isDeleteContactModalOpen, setIsDeleteContactModalOpen] = useState(false);
+  const [deleteContactMode, setDeleteContactMode] = useState("menu");
+  const [targetContact, setTargetContact] = useState(null);
+  const [isDeletingContact, setIsDeletingContact] = useState(false);
 
   const menuRef = useRef(null);
 
@@ -132,6 +138,39 @@ export default function Sidebar({
 
     if (result?.ok) {
       closeCreateGroupModal();
+    }
+  }
+
+  function openDeleteContactModal(contact) {
+    setTargetContact(contact);
+    setDeleteContactMode("menu");
+    setIsDeleteContactModalOpen(true);
+  }
+
+  function closeDeleteContactModal() {
+    if (isDeletingContact) return;
+
+    setIsDeleteContactModalOpen(false);
+    setDeleteContactMode("menu");
+    setTargetContact(null);
+  }
+
+  function requestDeleteContact() {
+    setDeleteContactMode("confirm");
+  }
+
+  async function confirmDeleteContact() {
+    if (!targetContact?.id || !onDeleteContact) return;
+
+    try {
+      setIsDeletingContact(true);
+      const result = await onDeleteContact(targetContact.id);
+
+      if (result?.ok) {
+        closeDeleteContactModal();
+      }
+    } finally {
+      setIsDeletingContact(false);
     }
   }
 
@@ -254,6 +293,7 @@ export default function Sidebar({
                   <ContactList
                     contacts={contacts}
                     onOpenPrivateChat={onOpenPrivateChat}
+                    onRequestDeleteContact={openDeleteContactModal}
                   />
                 </div>
               </div>
@@ -363,6 +403,76 @@ export default function Sidebar({
                 Создать группу
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isDeleteContactModalOpen && (
+        <div style={styles.modalOverlay} onClick={closeDeleteContactModal}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            {deleteContactMode === "menu" ? (
+              <>
+                <div style={styles.modalHeader}>
+                  <h3 style={styles.modalTitle}>Действие с контактом</h3>
+                  <button
+                    type="button"
+                    style={styles.modalCloseButton}
+                    onClick={closeDeleteContactModal}
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  style={styles.dangerButton}
+                  onClick={requestDeleteContact}
+                >
+                  Удалить
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={styles.modalHeader}>
+                  <h3 style={styles.modalTitle}>Удаление контакта</h3>
+                  <button
+                    type="button"
+                    style={styles.modalCloseButton}
+                    onClick={closeDeleteContactModal}
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div style={styles.modalText}>
+                  Вы точно хотите удалить контакт{" "}
+                  <strong>
+                    {targetContact?.username || targetContact?.email || "контакт"}
+                  </strong>
+                  ?
+                </div>
+
+                <div style={styles.modalActions}>
+                  <button
+                    type="button"
+                    style={styles.secondaryButton}
+                    onClick={closeDeleteContactModal}
+                    disabled={isDeletingContact}
+                  >
+                    Нет
+                  </button>
+
+                  <button
+                    type="button"
+                    style={styles.dangerButton}
+                    onClick={confirmDeleteContact}
+                    disabled={isDeletingContact}
+                  >
+                    {isDeletingContact ? "Удаление..." : "Да"}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

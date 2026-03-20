@@ -15,7 +15,7 @@ export async function addContactByEmail(email) {
   });
 }
 
-export async function removeContact(contactUserId) {
+export async function deleteContact(contactUserId) {
   return apiRequest(`/users/contacts/${contactUserId}`, {
     method: "DELETE",
   });

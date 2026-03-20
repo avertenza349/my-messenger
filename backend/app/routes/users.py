@@ -150,4 +150,4 @@ def remove_contact(
     db.delete(contact)
     db.commit()
 
-    return {"message": "Контакт удалён"}
+    return {"ok": True, "message": "Контакт удалён"}
