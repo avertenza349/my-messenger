@@ -374,22 +374,25 @@ export const styles = {
   modalOverlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(15, 23, 42, 0.28)",
+    background: "rgba(15, 23, 42, 0.35)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 200,
+    zIndex: 9999,
     padding: 16,
   },
 
   modalCard: {
     width: "100%",
-    maxWidth: 360,
-    background: "#fff",
-    borderRadius: 18,
-    border: "1px solid #dbe2ea",
+    maxWidth: 420,
+    background: "#ffffff",
+    borderRadius: 20,
     boxShadow: "0 20px 50px rgba(15, 23, 42, 0.18)",
-    padding: 16,
+    padding: 24,
+    display: "flex",
+    flexDirection: "column",
+    gap: 16,
+    border: "1px solid #e5e7eb",
   },
 
   modalHeader: {
@@ -400,10 +403,45 @@ export const styles = {
   },
 
   modalTitle: {
-    margin: 0,
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 700,
-    color: "#0f172a",
+    color: "#111827",
+    textAlign: "center",
+  },
+
+  dangerButton: {
+    border: "none",
+    borderRadius: 12,
+    padding: "12px 18px",
+    fontSize: 16,
+    fontWeight: 600,
+    cursor: "pointer",
+    background: "#ef4444",
+    color: "#ffffff",
+  },
+
+  secondaryButton: {
+    border: "1px solid #d1d5db",
+    borderRadius: 12,
+    padding: "12px 18px",
+    fontSize: 16,
+    fontWeight: 600,
+    cursor: "pointer",
+    background: "#f9fafb",
+    color: "#111827",
+  },
+
+  modalActions: {
+    display: "flex",
+    gap: 12,
+    justifyContent: "center",
+  },
+
+  modalText: {
+    fontSize: 16,
+    lineHeight: 1.5,
+    color: "#374151",
+    textAlign: "center",
   },
 
   modalCloseButton: {
