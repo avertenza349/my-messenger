@@ -507,13 +507,13 @@ export const styles = {
   chatList: {
     display: "flex",
     flexDirection: "column",
-    gap: 8,
+    gap: 1,
   },
 
   chatItem: {
     border: "1px solid #dbe2ea",
-    borderRadius: 12,
-    padding: 10,
+    borderRadius: 10,
+    padding: "8px 10px",
     cursor: "pointer",
     background: "#fff",
   },
@@ -522,32 +522,34 @@ export const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 4,
+    gap: 6,
+    marginBottom: 2,
   },
 
   unreadBadge: {
-    minWidth: 22,
-    height: 22,
+    minWidth: 18,
+    height: 18,
     borderRadius: 999,
     background: "#2563eb",
     color: "#fff",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: 12,
-    padding: "0 7px",
+    fontSize: 11,
+    padding: "0 5px",
   },
 
   chatMeta: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#64748b",
-    marginBottom: 4,
+    marginBottom: 2,
+    lineHeight: 1.2,
   },
 
   chatPreview: {
-    fontSize: 13,
+    fontSize: 12,
     color: "#334155",
+    lineHeight: 1.2,
   },
 
   chatArea: {
