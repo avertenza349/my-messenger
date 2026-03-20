@@ -7,48 +7,123 @@ export const styles = {
   },
 
   sidebar: {
-    width: 410,
+    width: 360,
     height: "100vh",
-    padding: "0 16px 16px 16px",
-    borderRight: "1px solid #d1d5db",
-    background: "#f3f4f6",
+    padding: 12,
+    borderRight: "1px solid #dbe2ea",
+    background: "#f3f6f9",
     boxSizing: "border-box",
-    overflowY: "auto",
+    overflow: "hidden",
     flexShrink: 0,
+    position: "relative",
   },
 
-  sidebarTop: {
-    position: "sticky",
-    top: 0,
-    zIndex: 30,
-    background: "#f3f4f6",
-    paddingTop: 16,
-    paddingBottom: 12,
+  contactsTitleOnly: {
+    paddingLeft: 52,
+    marginBottom: 12,
+  },
+
+  contactsBackFloating: {
+    position: "absolute",
+    top: 14,
+    left: 12,
+    width: 40,
+    height: 40,
+    borderRadius: "50%",
+    border: "1px solid #cbd5e1",
+    background: "#fff",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 18,
+    padding: 0,
+    zIndex: 20,
+    boxShadow: "0 6px 16px rgba(15, 23, 42, 0.08)",
+  },
+
+  sidebarPanelsViewport: {
+    width: "100%",
+    height: "100%",
+    overflow: "hidden",
+  },
+
+  sidebarPanelsTrack: {
+    display: "flex",
+    width: "200%",
+    height: "100%",
+    transition: "transform 0.28s ease",
+  },
+
+  sidebarPanel: {
+    width: "50%",
+    height: "100%",
+    overflowY: "auto",
+    paddingRight: 4,
+    boxSizing: "border-box",
   },
 
   sidebarHeader: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
-    paddingBottom: 12,
-    background: "#f3f4f6",
+    marginBottom: 12,
   },
 
-  userCard: {
-    border: "1px solid #d1d5db",
-    borderRadius: 12,
-    background: "#fff",
-    padding: 16,
-    marginBottom: 12,
+  panelTitleRow: {
     display: "flex",
     alignItems: "center",
-    gap: 14,
+    gap: 10,
+  },
+
+  userCardCompact: {
+    border: "1px solid #dbe2ea",
+    borderRadius: 14,
+    background: "#fff",
+    padding: 12,
+    marginBottom: 10,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    position: "relative",
+  },
+
+  userCardMain: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    minWidth: 0,
+    flex: 1,
+  },
+
+  userInfo: {
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: 2,
+  },
+
+  userName: {
+    fontSize: 15,
+    fontWeight: 700,
+    color: "#0f172a",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
+
+  userEmail: {
+    fontSize: 12,
+    color: "#64748b",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
 
   avatarUploadLabel: {
-    width: 72,
-    height: 72,
+    width: 56,
+    height: 56,
     borderRadius: "50%",
     overflow: "hidden",
     cursor: "pointer",
@@ -73,7 +148,7 @@ export const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 700,
     color: "#475569",
   },
@@ -82,34 +157,204 @@ export const styles = {
     display: "none",
   },
 
-  block: {
-    border: "1px solid #d1d5db",
-    borderRadius: 12,
+  profileMenuWrapper: {
+    position: "relative",
+    flexShrink: 0,
+  },
+
+  circleMenuButton: {
+    width: 36,
+    height: 36,
+    borderRadius: "50%",
+    border: "1px solid #cbd5e1",
+    background: "#f8fafc",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 18,
+    fontWeight: 700,
+    color: "#0f172a",
+    lineHeight: 1,
+    padding: 0,
+  },
+
+  popupMenu: {
+    position: "absolute",
+    top: 44,
+    right: 0,
+    minWidth: 170,
     background: "#fff",
-    padding: 12,
+    border: "1px solid #dbe2ea",
+    borderRadius: 12,
+    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.12)",
+    padding: 6,
+    zIndex: 50,
+  },
+
+  popupMenuItem: {
+    width: "100%",
+    textAlign: "left",
+    padding: "10px 12px",
+    border: "none",
+    borderRadius: 10,
+    background: "#fff",
+    cursor: "pointer",
+    fontSize: 14,
+    color: "#0f172a",
+  },
+
+  backButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    border: "1px solid #cbd5e1",
+    background: "#fff",
+    cursor: "pointer",
+    fontSize: 18,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 0,
+  },
+
+  contactsPanelHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 12,
+  },
+
+  contactsPanelBody: {
+    position: "relative",
+    paddingBottom: 80,
+  },
+
+  roundBackButton: {
+    width: 40,
+    height: 40,
+    borderRadius: "50%",
+    border: "1px solid #cbd5e1",
+    background: "#fff",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 18,
+    padding: 0,
+    flexShrink: 0,
+  },
+
+  floatingAddButton: {
+    position: "absolute",
+    right: 16,
+    bottom: 16,
+    width: 52,
+    height: 52,
+    borderRadius: "50%",
+    border: "none",
+    background: "#2563eb",
+    color: "#fff",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 30,
+    lineHeight: 1,
+    boxShadow: "0 10px 24px rgba(37, 99, 235, 0.28)",
+    zIndex: 20,
+  },
+
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(15, 23, 42, 0.28)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 200,
+    padding: 16,
+  },
+
+  modalCard: {
+    width: "100%",
+    maxWidth: 360,
+    background: "#fff",
+    borderRadius: 18,
+    border: "1px solid #dbe2ea",
+    boxShadow: "0 20px 50px rgba(15, 23, 42, 0.18)",
+    padding: 16,
+  },
+
+  modalHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 14,
   },
 
-  contactForm: {
+  modalTitle: {
+    margin: 0,
+    fontSize: 18,
+    fontWeight: 700,
+    color: "#0f172a",
+  },
+
+  modalCloseButton: {
+    width: 34,
+    height: 34,
+    borderRadius: "50%",
+    border: "1px solid #cbd5e1",
+    background: "#fff",
+    cursor: "pointer",
+    fontSize: 20,
+    lineHeight: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 0,
+  },
+
+  blockCompact: {
+    border: "1px solid #dbe2ea",
+    borderRadius: 14,
+    background: "#fff",
+    padding: 12,
+    marginBottom: 10,
+  },
+
+  blockHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+
+  blockTitle: {
+    margin: 0,
+    fontSize: 15,
+    fontWeight: 700,
+    color: "#0f172a",
+  },
+
+  contactFormCompact: {
     display: "flex",
     flexDirection: "column",
     gap: 10,
-    marginBottom: 12,
   },
 
   contactsList: {
     display: "flex",
     flexDirection: "column",
-    gap: 10,
-    maxHeight: 260,
+    gap: 8,
+    maxHeight: 520,
     overflowY: "auto",
-    marginBottom: 4,
   },
 
   contactItem: {
-    border: "1px solid #d1d5db",
+    border: "1px solid #e2e8f0",
     borderRadius: 10,
-    padding: 12,
+    padding: 10,
     cursor: "pointer",
     background: "#fff",
     display: "flex",
@@ -127,12 +372,12 @@ export const styles = {
   },
 
   scrollList: {
-    border: "1px solid #d1d5db",
-    borderRadius: 8,
+    border: "1px solid #e2e8f0",
+    borderRadius: 10,
     padding: 10,
-    maxHeight: 180,
+    maxHeight: 160,
     overflowY: "auto",
-    marginBottom: 12,
+    marginBottom: 10,
   },
 
   checkboxItem: {
@@ -140,19 +385,21 @@ export const styles = {
     alignItems: "center",
     gap: 8,
     marginBottom: 8,
+    fontSize: 14,
   },
 
   chatList: {
     display: "flex",
     flexDirection: "column",
-    gap: 10,
+    gap: 8,
   },
 
   chatItem: {
-    border: "1px solid #cbd5e1",
+    border: "1px solid #dbe2ea",
     borderRadius: 12,
-    padding: 12,
+    padding: 10,
     cursor: "pointer",
+    background: "#fff",
   },
 
   chatTitleRow: {
@@ -160,12 +407,12 @@ export const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     gap: 8,
-    marginBottom: 6,
+    marginBottom: 4,
   },
 
   unreadBadge: {
-    minWidth: 24,
-    height: 24,
+    minWidth: 22,
+    height: 22,
     borderRadius: 999,
     background: "#2563eb",
     color: "#fff",
@@ -173,60 +420,44 @@ export const styles = {
     alignItems: "center",
     justifyContent: "center",
     fontSize: 12,
-    padding: "0 8px",
+    padding: "0 7px",
   },
 
   chatMeta: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#64748b",
-    marginBottom: 6,
+    marginBottom: 4,
   },
 
   chatPreview: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#334155",
   },
 
   chatArea: {
     flex: 1,
-    height: "100vh",
-    minWidth: 0,
-    minHeight: 0,
     padding: 16,
     display: "flex",
     flexDirection: "column",
-    overflow: "hidden",
     gap: 12,
+    overflow: "hidden",
   },
 
   chatHeader: {
-    flexShrink: 0,
     display: "flex",
     alignItems: "center",
     gap: 12,
     paddingBottom: 12,
     borderBottom: "1px solid #d1d5db",
-    background: "#f8fafc",
   },
 
   messagesArea: {
     flex: 1,
-    minHeight: 0,
     display: "flex",
     flexDirection: "column",
     gap: 12,
     overflowY: "auto",
     padding: "12px 0",
-  },
-
-  chatFooter: {
-    flexShrink: 0,
-    paddingTop: 12,
-    borderTop: "1px solid #d1d5db",
-    background: "#f8fafc",
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
   },
 
   messageBubble: {
@@ -278,10 +509,11 @@ export const styles = {
 
   input: {
     width: "100%",
-    padding: 12,
+    padding: 10,
     borderRadius: 8,
     border: "1px solid #cbd5e1",
     boxSizing: "border-box",
+    minWidth: 0,
   },
 
   button: {
@@ -298,6 +530,8 @@ export const styles = {
     border: "1px solid #cbd5e1",
     background: "#fff",
     cursor: "pointer",
+    fontSize: 13,
+    whiteSpace: "nowrap",
   },
 
   mutedText: {

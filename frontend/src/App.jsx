@@ -20,7 +20,6 @@ export default function App() {
 
   const [users, setUsers] = useState([]);
   const [contacts, setContacts] = useState([]);
-  const [contactEmail, setContactEmail] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [mobileView, setMobileView] = useState("chats");
   const [newMessage, setNewMessage] = useState("");
@@ -58,19 +57,30 @@ export default function App() {
     }
   }
 
-  async function handleAddContact(e) {
-    e.preventDefault();
-
-    if (!contactEmail.trim()) return;
+  async function handleAddContact(email) {
+    if (!email?.trim()) {
+      return { ok: false, error: "Введите email" };
+    }
 
     try {
-      await addContactByEmail(contactEmail.trim());
-      setContactEmail("");
+      await addContactByEmail(email.trim());
       await loadContacts();
       auth.setMessage("Контакт добавлен");
       auth.setError("");
+      return { ok: true };
     } catch (err) {
-      auth.setError(err.message || "Не удалось добавить контакт");
+      const rawMessage = err?.message || "";
+      const normalizedMessage = rawMessage.toLowerCase();
+
+      const message =
+        rawMessage.includes("404") ||
+        normalizedMessage.includes("not found") ||
+        normalizedMessage.includes("не найден")
+          ? "Пользователь не найден"
+          : rawMessage || "Не удалось добавить контакт";
+
+      auth.setError(message);
+      return { ok: false, error: message };
     }
   }
 
@@ -207,8 +217,6 @@ export default function App() {
   }, [chats.selectedChat]);
 
   useWebSocket(localStorage.getItem("access_token"), async (data) => {
-    console.log("WS:", data);
-
     if (!auth.currentUser) return;
 
     if (data?.type === "new_message") {
@@ -258,9 +266,6 @@ export default function App() {
           }}
           contacts={contacts}
           users={users}
-          usersMap={usersMap}
-          contactEmail={contactEmail}
-          setContactEmail={setContactEmail}
           onAddContact={handleAddContact}
           onOpenPrivateChat={handleOpenPrivateChat}
           groupTitle={chats.groupTitle}
