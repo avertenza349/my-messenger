@@ -18,30 +18,6 @@ export const styles = {
     position: "relative",
   },
 
-  contactsTitleOnly: {
-    paddingLeft: 52,
-    marginBottom: 12,
-  },
-
-  contactsBackFloating: {
-    position: "absolute",
-    top: 14,
-    left: 12,
-    width: 40,
-    height: 40,
-    borderRadius: "50%",
-    border: "1px solid #cbd5e1",
-    background: "#fff",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 18,
-    padding: 0,
-    zIndex: 20,
-    boxShadow: "0 6px 16px rgba(15, 23, 42, 0.08)",
-  },
-
   sidebarPanelsViewport: {
     width: "100%",
     height: "100%",
@@ -68,12 +44,6 @@ export const styles = {
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 12,
-  },
-
-  panelTitleRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
   },
 
   userCardCompact: {
@@ -204,33 +174,30 @@ export const styles = {
     color: "#0f172a",
   },
 
-  backButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    border: "1px solid #cbd5e1",
-    background: "#fff",
-    cursor: "pointer",
-    fontSize: 18,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 0,
-  },
-
-  contactsPanelHeader: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 12,
-  },
-
-  contactsPanelBody: {
+  contactsScreen: {
     position: "relative",
-    paddingBottom: 80,
+    height: "100%",
+    paddingTop: 2,
   },
 
-  roundBackButton: {
+  contactsScreenTitle: {
+    fontSize: 22,
+    fontWeight: 700,
+    marginBottom: 12,
+    paddingLeft: 52,
+    color: "#0f172a",
+  },
+
+  contactsScreenList: {
+    height: "calc(100% - 40px)",
+    overflowY: "auto",
+    paddingBottom: 90,
+  },
+
+  contactsBackFloating: {
+    position: "absolute",
+    top: 14,
+    left: 12,
     width: 40,
     height: 40,
     borderRadius: "50%",
@@ -242,7 +209,8 @@ export const styles = {
     justifyContent: "center",
     fontSize: 18,
     padding: 0,
-    flexShrink: 0,
+    zIndex: 20,
+    boxShadow: "0 6px 16px rgba(15, 23, 42, 0.08)",
   },
 
   floatingAddButton: {
@@ -337,29 +305,61 @@ export const styles = {
     color: "#0f172a",
   },
 
-  contactFormCompact: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-  },
-
   contactsList: {
     display: "flex",
     flexDirection: "column",
     gap: 8,
-    maxHeight: 520,
-    overflowY: "auto",
   },
 
-  contactItem: {
+  contactRowButton: {
+    width: "100%",
     border: "1px solid #e2e8f0",
-    borderRadius: 10,
+    borderRadius: 14,
     padding: 10,
-    cursor: "pointer",
     background: "#fff",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    textAlign: "left",
+  },
+
+  contactAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: "50%",
+    background: "#dbeafe",
+    color: "#1e3a8a",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 700,
+    fontSize: 16,
+    flexShrink: 0,
+  },
+
+  contactContent: {
+    minWidth: 0,
     display: "flex",
     flexDirection: "column",
-    gap: 4,
+    gap: 3,
+  },
+
+  contactName: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: "#0f172a",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
+
+  contactEmailText: {
+    fontSize: 12,
+    color: "#64748b",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
 
   fullButton: {

@@ -214,12 +214,10 @@ export default function Sidebar({
             </div>
 
             <div style={styles.sidebarPanel}>
-              <div style={styles.contactsTitleOnly}>
-                <h2 style={{ margin: 0, fontSize: 22 }}>Контакты</h2>
-              </div>
+              <div style={styles.contactsScreen}>
+                <div style={styles.contactsScreenTitle}>Контакты</div>
 
-              <div style={styles.contactsPanelBody}>
-                <div style={styles.blockCompact}>
+                <div style={styles.contactsScreenList}>
                   <ContactList
                     contacts={contacts}
                     onOpenPrivateChat={onOpenPrivateChat}
