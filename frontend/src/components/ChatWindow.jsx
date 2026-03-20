@@ -68,6 +68,24 @@ export default function ChatWindow({
   const prependStateRef = useRef(null);
   const prevChatIdRef = useRef(null);
   const prevMessagesLengthRef = useRef(0);
+  const shouldAutoScrollRef = useRef(true);
+
+  function scrollToBottom(behavior = "auto") {
+    const container = messagesRef.current;
+    if (!container) return;
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior,
+    });
+  }
+
+  function isNearBottom(container, threshold = 120) {
+    return (
+      container.scrollHeight - container.scrollTop - container.clientHeight <=
+      threshold
+    );
+  }
 
   useEffect(() => {
     const container = messagesRef.current;
@@ -75,12 +93,9 @@ export default function ChatWindow({
 
     const handleScroll = () => {
       onSaveScrollPosition?.(selectedChat.id, container.scrollTop);
+      shouldAutoScrollRef.current = isNearBottom(container);
 
-      if (
-        container.scrollTop <= 80 &&
-        hasMoreMessages &&
-        !isLoadingOlder
-      ) {
+      if (container.scrollTop <= 80 && hasMoreMessages && !isLoadingOlder) {
         prependStateRef.current = {
           chatId: selectedChat.id,
           prevScrollHeight: container.scrollHeight,
@@ -90,6 +105,8 @@ export default function ChatWindow({
         onLoadOlderMessages?.(selectedChat.id);
       }
     };
+
+    shouldAutoScrollRef.current = isNearBottom(container);
 
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
@@ -143,6 +160,7 @@ export default function ChatWindow({
           currentContainer.scrollTop = currentContainer.scrollHeight;
         }
 
+        shouldAutoScrollRef.current = isNearBottom(currentContainer);
         restoreDoneRef.current[selectedChat.id] = true;
       });
     }
@@ -163,22 +181,30 @@ export default function ChatWindow({
     const container = messagesRef.current;
     const prependState = prependStateRef.current;
 
-    if (!container || !prependState || !selectedChat?.id) {
+    if (!container || !selectedChat?.id) {
       prevMessagesLengthRef.current = messages.length;
       return;
     }
 
-    if (
-      prependState.chatId === selectedChat.id &&
-      messages.length > prevMessagesLengthRef.current
-    ) {
+    const prevLength = prevMessagesLengthRef.current;
+    const currentLength = messages.length;
+
+    if (prependState && prependState.chatId === selectedChat.id && currentLength > prevLength) {
       const newScrollHeight = container.scrollHeight;
       const delta = newScrollHeight - prependState.prevScrollHeight;
       container.scrollTop = prependState.prevScrollTop + delta;
       prependStateRef.current = null;
+      prevMessagesLengthRef.current = currentLength;
+      return;
     }
 
-    prevMessagesLengthRef.current = messages.length;
+    if (currentLength > prevLength && shouldAutoScrollRef.current) {
+      requestAnimationFrame(() => {
+        scrollToBottom("smooth");
+      });
+    }
+
+    prevMessagesLengthRef.current = currentLength;
   }, [messages, selectedChat?.id]);
 
   if (!selectedChat) {
