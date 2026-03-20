@@ -74,8 +74,8 @@ export default function App() {
 
       const message =
         rawMessage.includes("404") ||
-        normalizedMessage.includes("not found") ||
-        normalizedMessage.includes("не найден")
+          normalizedMessage.includes("not found") ||
+          normalizedMessage.includes("не найден")
           ? "Пользователь не найден"
           : rawMessage || "Не удалось добавить контакт";
 
@@ -117,13 +117,28 @@ export default function App() {
     e.preventDefault();
 
     try {
-      await chats.createGroup(chats.groupTitle, chats.groupParticipantIds);
+      const createdChat = await chats.createGroup(
+        chats.groupTitle,
+        chats.groupParticipantIds
+      );
+
+      await chats.loadChats();
+
+      if (createdChat?.id) {
+        chats.setSelectedChat(createdChat);
+        await chats.loadMessages(createdChat.id);
+      }
+
       if (isMobile) setMobileView("chat");
+
+      auth.setMessage("Группа создана");
+      auth.setError("");
+      return { ok: true };
     } catch (err) {
       auth.setError(err.message || "Не удалось создать группу");
+      return { ok: false };
     }
   }
-
   async function handleAvatarChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;

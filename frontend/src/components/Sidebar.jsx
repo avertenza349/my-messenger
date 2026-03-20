@@ -125,8 +125,13 @@ export default function Sidebar({
   }
 
   async function handleSubmitCreateGroup(e) {
-    await onCreateGroup(e);
-    closeCreateGroupModal();
+    e.preventDefault();
+
+    const result = await onCreateGroup(e);
+
+    if (result?.ok) {
+      closeCreateGroupModal();
+    }
   }
 
   return (
