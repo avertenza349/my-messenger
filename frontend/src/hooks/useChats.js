@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   getMyChats,
   getChatMessages,
@@ -8,12 +8,44 @@ import {
   sendImage,
 } from "../api/chats";
 
+const PAGE_SIZE = 30;
+const CHAT_SCROLL_STORAGE_KEY = "chat_scroll_positions_v1";
+
+function readStoredScrollPositions() {
+  try {
+    return JSON.parse(localStorage.getItem(CHAT_SCROLL_STORAGE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function writeStoredScrollPositions(value) {
+  localStorage.setItem(CHAT_SCROLL_STORAGE_KEY, JSON.stringify(value));
+}
+
 export function useChats() {
   const [chats, setChats] = useState([]);
   const [selectedChat, setSelectedChatState] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [messagesByChat, setMessagesByChat] = useState({});
+  const [loadingByChat, setLoadingByChat] = useState({});
+  const [loadingOlderByChat, setLoadingOlderByChat] = useState({});
+  const [hasMoreByChat, setHasMoreByChat] = useState({});
   const [groupTitle, setGroupTitle] = useState("");
   const [groupParticipantIds, setGroupParticipantIds] = useState([]);
+  const [scrollPositions, setScrollPositions] = useState(readStoredScrollPositions);
+
+  const messages = selectedChat ? messagesByChat[selectedChat.id] || [] : [];
+
+  const setSelectedChat = useCallback((chat) => {
+    setSelectedChatState(chat);
+    if (chat?.id) {
+      setChats((prev) =>
+        prev.map((item) =>
+          item.id === chat.id ? { ...item, unreadCount: 0 } : item
+        )
+      );
+    }
+  }, []);
 
   async function loadChats() {
     const chatList = await getMyChats();
@@ -39,67 +71,140 @@ export function useChats() {
     return sortedChats;
   }
 
-  async function loadMessages(chatId) {
-    const list = await getChatMessages(chatId);
-    setMessages(list);
+  async function loadMessages(chatId, options = {}) {
+    const { force = false } = options;
+
+    if (!force && messagesByChat[chatId]?.length) {
+      return messagesByChat[chatId];
+    }
+
+    setLoadingByChat((prev) => ({ ...prev, [chatId]: true }));
+
+    try {
+      const list = await getChatMessages(chatId, { limit: PAGE_SIZE });
+
+      setMessagesByChat((prev) => ({
+        ...prev,
+        [chatId]: list,
+      }));
+
+      setHasMoreByChat((prev) => ({
+        ...prev,
+        [chatId]: list.length === PAGE_SIZE,
+      }));
+
+      return list;
+    } finally {
+      setLoadingByChat((prev) => ({ ...prev, [chatId]: false }));
+    }
+  }
+
+  async function loadOlderMessages(chatId) {
+    const currentMessages = messagesByChat[chatId] || [];
+
+    if (!currentMessages.length) {
+      return [];
+    }
+
+    if (loadingOlderByChat[chatId]) {
+      return [];
+    }
+
+    if (!hasMoreByChat[chatId]) {
+      return [];
+    }
+
+    const oldestMessage = currentMessages[0];
+    if (!oldestMessage?.id) {
+      return [];
+    }
+
+    setLoadingOlderByChat((prev) => ({ ...prev, [chatId]: true }));
+
+    try {
+      const older = await getChatMessages(chatId, {
+        limit: PAGE_SIZE,
+        beforeId: oldestMessage.id,
+      });
+
+      setMessagesByChat((prev) => ({
+        ...prev,
+        [chatId]: [...older, ...(prev[chatId] || [])],
+      }));
+
+      setHasMoreByChat((prev) => ({
+        ...prev,
+        [chatId]: older.length === PAGE_SIZE,
+      }));
+
+      return older;
+    } finally {
+      setLoadingOlderByChat((prev) => ({ ...prev, [chatId]: false }));
+    }
+  }
+
+  async function refreshCurrentChat(chatId) {
+    const currentMessages = messagesByChat[chatId] || [];
+    const list = await getChatMessages(chatId, { limit: PAGE_SIZE });
+
+    if (!currentMessages.length) {
+      setMessagesByChat((prev) => ({ ...prev, [chatId]: list }));
+      setHasMoreByChat((prev) => ({
+        ...prev,
+        [chatId]: list.length === PAGE_SIZE,
+      }));
+      return list;
+    }
+
+    const currentIds = new Set(currentMessages.map((msg) => msg.id));
+    const onlyNew = list.filter((msg) => !currentIds.has(msg.id));
+
+    if (onlyNew.length) {
+      setMessagesByChat((prev) => ({
+        ...prev,
+        [chatId]: [...(prev[chatId] || []), ...onlyNew],
+      }));
+    }
+
+    setHasMoreByChat((prev) => ({
+      ...prev,
+      [chatId]: list.length === PAGE_SIZE,
+    }));
+
     return list;
   }
 
-  function setSelectedChat(chat) {
-    setSelectedChatState(chat);
+  function saveScrollPosition(chatId, scrollTop) {
+    if (!chatId) return;
 
-    if (!chat) return;
-
-    setChats((prevChats) =>
-      prevChats.map((item) =>
-        item.id === chat.id
-          ? { ...item, unreadCount: 0 }
-          : item
-      )
-    );
+    setScrollPositions((prev) => {
+      const next = {
+        ...prev,
+        [chatId]: Math.max(0, Math.round(scrollTop)),
+      };
+      writeStoredScrollPositions(next);
+      return next;
+    });
   }
 
-  function incrementUnread(chatId) {
-    setChats((prevChats) =>
-      prevChats
-        .map((chat) =>
-          chat.id === chatId
-            ? { ...chat, unreadCount: (chat.unreadCount || 0) + 1 }
-            : chat
-        )
-        .sort((a, b) => {
-          const aDate = a.last_message?.created_at || "";
-          const bDate = b.last_message?.created_at || "";
-          return bDate.localeCompare(aDate);
-        })
-    );
+  function getSavedScrollPosition(chatId) {
+    return scrollPositions[chatId] || 0;
   }
 
-  function updateChatLastMessage(chatId, message) {
-    setChats((prevChats) =>
-      prevChats
-        .map((chat) =>
-          chat.id === chatId
-            ? {
-                ...chat,
-                last_message: {
-                  id: message.id,
-                  sender_id: message.sender_id,
-                  content:
-                    message.message_type === "image"
-                      ? "📷 Изображение"
-                      : message.content,
-                  created_at: message.created_at,
-                },
-              }
-            : chat
-        )
-        .sort((a, b) => {
-          const aDate = a.last_message?.created_at || "";
-          const bDate = b.last_message?.created_at || "";
-          return bDate.localeCompare(aDate);
-        })
-    );
+  async function ensureMessagesForSavedPosition(chatId, container) {
+    if (!chatId || !container) return;
+
+    const targetScrollTop = getSavedScrollPosition(chatId);
+
+    while (
+      hasMoreByChat[chatId] !== false &&
+      container.scrollHeight < targetScrollTop + container.clientHeight + 120
+    ) {
+      const older = await loadOlderMessages(chatId);
+      if (!older.length) {
+        break;
+      }
+    }
   }
 
   async function openPrivateChat(userId) {
@@ -134,13 +239,68 @@ export function useChats() {
     );
   }
 
+  function incrementUnread(chatId) {
+    if (!chatId) return;
+
+    setChats((prev) =>
+      prev.map((chat) =>
+        chat.id === chatId
+          ? {
+              ...chat,
+              unreadCount:
+                selectedChat?.id === chatId ? 0 : (chat.unreadCount || 0) + 1,
+            }
+          : chat
+      )
+    );
+  }
+
+  function updateChatLastMessage(chatId, message) {
+    if (!chatId || !message) return;
+
+    setChats((prev) => {
+      const next = prev.map((chat) =>
+        chat.id === chatId
+          ? {
+              ...chat,
+              last_message: message,
+            }
+          : chat
+      );
+
+      next.sort((a, b) => {
+        const aDate = a.last_message?.created_at || "";
+        const bDate = b.last_message?.created_at || "";
+        return bDate.localeCompare(aDate);
+      });
+
+      return next;
+    });
+  }
+
+  const selectedChatMeta = useMemo(() => {
+    if (!selectedChat?.id) {
+      return {
+        isLoading: false,
+        isLoadingOlder: false,
+        hasMore: false,
+      };
+    }
+
+    return {
+      isLoading: !!loadingByChat[selectedChat.id],
+      isLoadingOlder: !!loadingOlderByChat[selectedChat.id],
+      hasMore: hasMoreByChat[selectedChat.id] !== false,
+    };
+  }, [selectedChat, loadingByChat, loadingOlderByChat, hasMoreByChat]);
+
   return {
     chats,
     setChats,
     selectedChat,
     setSelectedChat,
     messages,
-    setMessages,
+    messagesByChat,
     groupTitle,
     setGroupTitle,
     groupParticipantIds,
@@ -148,11 +308,17 @@ export function useChats() {
     toggleGroupParticipant,
     loadChats,
     loadMessages,
+    loadOlderMessages,
+    refreshCurrentChat,
     openPrivateChat,
     createGroup,
     send,
     sendImg,
     incrementUnread,
     updateChatLastMessage,
+    saveScrollPosition,
+    getSavedScrollPosition,
+    ensureMessagesForSavedPosition,
+    selectedChatMeta,
   };
 }

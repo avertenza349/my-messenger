@@ -4,8 +4,23 @@ export async function getMyChats() {
   return apiRequest("/chats/");
 }
 
-export async function getChatMessages(chatId) {
-  return apiRequest(`/chats/${chatId}/messages`);
+export async function getChatMessages(chatId, options = {}) {
+  const params = new URLSearchParams();
+
+  if (options.limit) {
+    params.set("limit", String(options.limit));
+  }
+
+  if (options.beforeId) {
+    params.set("before_id", String(options.beforeId));
+  }
+
+  const query = params.toString();
+  const url = query
+    ? `/chats/${chatId}/messages?${query}`
+    : `/chats/${chatId}/messages`;
+
+  return apiRequest(url);
 }
 
 export async function sendMessage(chatId, content) {
@@ -24,7 +39,6 @@ export async function createPrivateChat(userId) {
 
 export async function sendImage(chatId, file) {
   const token = localStorage.getItem("access_token");
-
   const formData = new FormData();
   formData.append("file", file);
 

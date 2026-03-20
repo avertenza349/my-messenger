@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getUsers,
   getContacts,
@@ -24,6 +24,15 @@ export default function App() {
   const [mobileView, setMobileView] = useState("chats");
   const [newMessage, setNewMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
+
+  const handleSelectChat = useCallback(
+    async (chat) => {
+      chats.setSelectedChat(chat);
+      await chats.loadMessages(chat.id);
+      if (isMobile) setMobileView("chat");
+    },
+    [chats, isMobile]
+  );
 
   const usersMap = useMemo(() => {
     const map = {};
@@ -225,11 +234,7 @@ export default function App() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    if (chats.selectedChat) {
-      chats.loadMessages(chats.selectedChat.id);
-    }
-  }, [chats.selectedChat]);
+
 
   useWebSocket(localStorage.getItem("access_token"), async (data) => {
     if (!auth.currentUser) return;
@@ -245,7 +250,7 @@ export default function App() {
       }
 
       if (isCurrentChat) {
-        await chats.loadMessages(incomingChatId);
+        await chats.refreshCurrentChat(incomingChatId);
         chats.setSelectedChat(chats.selectedChat);
       } else {
         chats.incrementUnread(incomingChatId);
@@ -281,10 +286,7 @@ export default function App() {
           currentUser={auth.currentUser}
           chats={chats.chats}
           selectedChat={chats.selectedChat}
-          setSelectedChat={(chat) => {
-            chats.setSelectedChat(chat);
-            if (isMobile) setMobileView("chat");
-          }}
+          setSelectedChat={handleSelectChat}
           contacts={contacts}
           users={users}
           onAddContact={handleAddContact}
@@ -317,6 +319,12 @@ export default function App() {
           getChatDisplayName={getChatDisplayName}
           error={auth.error}
           message={auth.message}
+          onLoadOlderMessages={chats.loadOlderMessages}
+          onSaveScrollPosition={chats.saveScrollPosition}
+          getSavedScrollPosition={chats.getSavedScrollPosition}
+          ensureMessagesForSavedPosition={chats.ensureMessagesForSavedPosition}
+          isLoadingOlder={chats.selectedChatMeta.isLoadingOlder}
+          hasMoreMessages={chats.selectedChatMeta.hasMore}
         />
       )}
     </div>

@@ -624,6 +624,13 @@ export const styles = {
     padding: "12px 0",
   },
 
+  historyLoader: {
+    textAlign: "center",
+    fontSize: 13,
+    color: "#64748b",
+    padding: "8px 0",
+  },
+
   messageBubble: {
     maxWidth: 320,
     padding: 12,

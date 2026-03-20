@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Query
 from sqlalchemy.orm import Session
 from typing import List
 import os
@@ -32,8 +32,10 @@ def ensure_user_in_chat(chat_id: int, user_id: int, db: Session):
 @router.get("/{chat_id}/messages", response_model=List[MessageResponse])
 def get_chat_messages(
     chat_id: int,
+    limit: int = Query(30, ge=1, le=100),
+    before_id: int | None = Query(None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     chat = db.query(Chat).filter(Chat.id == chat_id).first()
     if not chat:
@@ -41,14 +43,20 @@ def get_chat_messages(
 
     ensure_user_in_chat(chat_id, current_user.id, db)
 
+    query = db.query(Message).filter(Message.chat_id == chat_id)
+
+    if before_id is not None:
+        query = query.filter(Message.id < before_id)
+
+    # Берем последние limit сообщений из нужного диапазона
     messages = (
-        db.query(Message)
-        .filter(Message.chat_id == chat_id)
-        .order_by(Message.created_at.asc())
+        query.order_by(Message.id.desc())
+        .limit(limit)
         .all()
     )
 
-    return messages
+    # Разворачиваем обратно в старый -> новый
+    return list(reversed(messages))
 
 
 # Отправка текстового сообщения
