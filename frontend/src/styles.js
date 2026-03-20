@@ -282,6 +282,53 @@ export const styles = {
     boxShadow: "0 6px 16px rgba(15, 23, 42, 0.08)",
   },
 
+  mainFloatingGroupButton: {
+    position: "absolute",
+    right: 16,
+    bottom: 16,
+    width: 52,
+    height: 52,
+    borderRadius: "50%",
+    border: "none",
+    background: "#2563eb",
+    color: "#fff",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 30,
+    lineHeight: 1,
+    boxShadow: "0 10px 24px rgba(37, 99, 235, 0.28)",
+    zIndex: 20,
+  },
+
+  groupModalCard: {
+    width: "100%",
+    maxWidth: 420,
+    background: "#fff",
+    borderRadius: 18,
+    border: "1px solid #dbe2ea",
+    boxShadow: "0 20px 50px rgba(15, 23, 42, 0.18)",
+    padding: 16,
+  },
+
+  groupMemberRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+    fontSize: 14,
+  },
+
+  groupMembersBox: {
+    border: "1px solid #dbe2ea",
+    borderRadius: 12,
+    padding: 12,
+    maxHeight: 220,
+    overflowY: "auto",
+    background: "#f8fafc",
+  },
+
   floatingAddButton: {
     position: "absolute",
     right: 16,

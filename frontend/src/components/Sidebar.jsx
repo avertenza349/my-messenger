@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { styles } from "../styles";
 import ContactList from "./ContactList";
-import GroupCreator from "./GroupCreator";
 import ChatList from "./ChatList";
 
 export default function Sidebar({
@@ -11,7 +10,6 @@ export default function Sidebar({
   onOpenPrivateChat,
   groupTitle,
   setGroupTitle,
-  users,
   groupParticipantIds,
   toggleGroupParticipant,
   onCreateGroup,
@@ -24,11 +22,14 @@ export default function Sidebar({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activePanel, setActivePanel] = useState("main");
+
   const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false);
   const [contactEmail, setContactEmail] = useState("");
   const [contactModalError, setContactModalError] = useState("");
   const [contactModalMessage, setContactModalMessage] = useState("");
   const [isAddingContact, setIsAddingContact] = useState(false);
+
+  const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
 
   const menuRef = useRef(null);
 
@@ -114,6 +115,20 @@ export default function Sidebar({
     }
   }
 
+  function openCreateGroupModal() {
+    setIsCreateGroupModalOpen(true);
+  }
+
+  function closeCreateGroupModal() {
+    setIsCreateGroupModalOpen(false);
+    setGroupTitle("");
+  }
+
+  async function handleSubmitCreateGroup(e) {
+    await onCreateGroup(e);
+    closeCreateGroupModal();
+  }
+
   return (
     <>
       <aside style={styles.sidebar}>
@@ -190,17 +205,6 @@ export default function Sidebar({
 
               <div style={styles.sidebarBody}>
                 <div style={styles.blockCompact}>
-                  <GroupCreator
-                    groupTitle={groupTitle}
-                    setGroupTitle={setGroupTitle}
-                    users={users}
-                    groupParticipantIds={groupParticipantIds}
-                    toggleGroupParticipant={toggleGroupParticipant}
-                    onCreateGroup={onCreateGroup}
-                  />
-                </div>
-
-                <div style={styles.blockCompact}>
                   <div style={styles.blockHeader}>
                     <h3 style={styles.blockTitle}>Мои чаты</h3>
                   </div>
@@ -213,6 +217,15 @@ export default function Sidebar({
                   />
                 </div>
               </div>
+
+              <button
+                type="button"
+                style={styles.mainFloatingGroupButton}
+                onClick={openCreateGroupModal}
+                title="Новая группа"
+              >
+                +
+              </button>
             </section>
 
             <section style={styles.sidebarScreen}>
@@ -288,6 +301,59 @@ export default function Sidebar({
                 disabled={isAddingContact}
               >
                 {isAddingContact ? "Добавление..." : "Добавить"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isCreateGroupModalOpen && (
+        <div style={styles.modalOverlay} onClick={closeCreateGroupModal}>
+          <div
+            style={styles.groupModalCard}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={styles.modalHeader}>
+              <h3 style={styles.modalTitle}>Новая группа</h3>
+              <button
+                type="button"
+                style={styles.modalCloseButton}
+                onClick={closeCreateGroupModal}
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitCreateGroup} style={styles.form}>
+              <input
+                type="text"
+                placeholder="Название группы"
+                value={groupTitle}
+                onChange={(e) => setGroupTitle(e.target.value)}
+                style={styles.input}
+              />
+
+              <div style={styles.groupMembersBox}>
+                {contacts.length === 0 ? (
+                  <div style={styles.mutedText}>Сначала добавь контакты</div>
+                ) : (
+                  contacts.map((user) => (
+                    <label key={user.id} style={styles.groupMemberRow}>
+                      <input
+                        type="checkbox"
+                        checked={groupParticipantIds.includes(user.id)}
+                        onChange={() => toggleGroupParticipant(user.id)}
+                      />
+                      <span>
+                        {user.username} ({user.email})
+                      </span>
+                    </label>
+                  ))
+                )}
+              </div>
+
+              <button type="submit" style={styles.button}>
+                Создать группу
               </button>
             </form>
           </div>
