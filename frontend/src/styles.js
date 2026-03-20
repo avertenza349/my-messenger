@@ -18,6 +18,28 @@ export const styles = {
     position: "relative",
   },
 
+  dateDividerWrapper: {
+    display: "flex",
+    justifyContent: "center",
+    margin: "14px 0 10px",
+  },
+
+  dateDivider: {
+    padding: "6px 12px",
+    borderRadius: 999,
+    background: "#e5e7eb",
+    color: "#374151",
+    fontSize: 12,
+    fontWeight: 600,
+  },
+
+  messageTime: {
+    fontSize: 11,
+    color: "#6b7280",
+    whiteSpace: "nowrap",
+    flexShrink: 0,
+  },
+
   sidebarViewport: {
     width: "100%",
     height: "100%",

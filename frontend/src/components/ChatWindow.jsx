@@ -1,5 +1,47 @@
 import { styles } from "../styles";
 
+function isSameDay(dateA, dateB) {
+  const a = new Date(dateA);
+  const b = new Date(dateB);
+
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function formatMessageTime(dateString) {
+  const date = new Date(dateString);
+
+  return date.toLocaleTimeString("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatDateDivider(dateString) {
+  const date = new Date(dateString);
+  const today = new Date();
+  const yesterday = new Date();
+
+  yesterday.setDate(today.getDate() - 1);
+
+  if (isSameDay(date, today)) {
+    return "Сегодня";
+  }
+
+  if (isSameDay(date, yesterday)) {
+    return "Вчера";
+  }
+
+  return date.toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export default function ChatWindow({
   isMobile,
   selectedChat,
@@ -36,34 +78,69 @@ export default function ChatWindow({
         {messages.length === 0 ? (
           <div style={styles.emptyState}>Пока нет сообщений</div>
         ) : (
-          messages.map((msg) => (
-            <div
-              key={msg.id}
-              style={{
-                ...styles.messageBubble,
-                alignSelf:
-                  msg.sender_id === currentUser.id ? "flex-end" : "flex-start",
-                background:
-                  msg.sender_id === currentUser.id ? "#dbeafe" : "#fff",
-              }}
-            >
-              <div style={styles.messageAuthor}>
-                {msg.sender_id === currentUser.id
-                  ? "Ты"
-                  : usersMap[msg.sender_id]?.username || `User #${msg.sender_id}`}
-              </div>
+          messages.map((msg, index) => {
+            const prevMessage = messages[index - 1];
 
-              {msg.message_type === "image" && msg.image_url ? (
-                <img
-                  src={msg.image_url}
-                  alt="Сообщение"
-                  style={styles.messageImage}
-                />
-              ) : (
-                <div>{msg.content}</div>
-              )}
-            </div>
-          ))
+            const showDate =
+              !prevMessage || !isSameDay(prevMessage.created_at, msg.created_at);
+
+            const isMine = msg.sender_id === currentUser.id;
+
+            return (
+              <div key={msg.id} style={{ width: "100%" }}>
+                {showDate && (
+                  <div style={styles.dateDividerWrapper}>
+                    <div style={styles.dateDivider}>
+                      {formatDateDivider(msg.created_at)}
+                    </div>
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: isMine ? "flex-end" : "flex-start",
+                    width: "100%",
+                  }}
+                >
+                  <div
+                    style={{
+                      ...styles.messageBubble,
+                      background: isMine ? "#dbeafe" : "#fff",
+                      display: "flex",
+                      alignItems: "flex-end",
+                      gap: 8,
+                    }}
+                  >
+
+                    {msg.message_type === "image" && msg.image_url ? (
+                      <img
+                        src={msg.image_url}
+                        alt="Сообщение"
+                        style={styles.messageImage}
+                      />
+                    ) : (
+                      <div style={{ flex: 1 }}>
+                        {msg.message_type === "image" && msg.image_url ? (
+                          <img
+                            src={msg.image_url}
+                            alt="Сообщение"
+                            style={styles.messageImage}
+                          />
+                        ) : (
+                          <div>{msg.content}</div>
+                        )}
+                      </div>
+                    )}
+
+                    <div style={styles.messageTime}>
+                      {formatMessageTime(msg.created_at)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
 
