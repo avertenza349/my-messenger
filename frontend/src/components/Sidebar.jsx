@@ -19,6 +19,7 @@ export default function Sidebar({
   getChatDisplayName,
   onLogout,
   onAvatarChange,
+  onDeleteChat,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activePanel, setActivePanel] = useState("main");
@@ -219,6 +220,7 @@ export default function Sidebar({
                     selectedChat={selectedChat}
                     setSelectedChat={setSelectedChat}
                     getChatDisplayName={getChatDisplayName}
+                    onDeleteChat={onDeleteChat}
                   />
                 </div>
               </div>

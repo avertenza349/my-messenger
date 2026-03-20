@@ -6,6 +6,7 @@ import {
   createGroupChat,
   sendMessage,
   sendImage,
+  deleteChat,
 } from "../api/chats";
 
 const PAGE_SIZE = 30;
@@ -46,6 +47,50 @@ export function useChats() {
       );
     }
   }, []);
+
+  async function removeChat(chatId) {
+    await deleteChat(chatId);
+
+    setChats((prev) => prev.filter((chat) => chat.id !== chatId));
+
+    setMessagesByChat((prev) => {
+      const next = { ...prev };
+      delete next[chatId];
+      return next;
+    });
+
+    setLoadingByChat((prev) => {
+      const next = { ...prev };
+      delete next[chatId];
+      return next;
+    });
+
+    setLoadingOlderByChat((prev) => {
+      const next = { ...prev };
+      delete next[chatId];
+      return next;
+    });
+
+    setHasMoreByChat((prev) => {
+      const next = { ...prev };
+      delete next[chatId];
+      return next;
+    });
+
+    setScrollPositions((prev) => {
+      const next = { ...prev };
+      delete next[chatId];
+      writeStoredScrollPositions(next);
+      return next;
+    });
+
+    setSelectedChatState((prev) => {
+      if (prev?.id === chatId) {
+        return null;
+      }
+      return prev;
+    });
+  }
 
   async function loadChats() {
     const chatList = await getMyChats();
@@ -314,6 +359,7 @@ export function useChats() {
     createGroup,
     send,
     sendImg,
+    removeChat,
     incrementUnread,
     updateChatLastMessage,
     saveScrollPosition,

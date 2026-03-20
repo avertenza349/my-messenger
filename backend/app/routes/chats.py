@@ -129,6 +129,36 @@ def get_my_chats(
     return [build_chat_response(chat, db) for chat in chats]
 
 
+@router.delete("/{chat_id}")
+def delete_chat(
+    chat_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    chat = db.query(Chat).filter(Chat.id == chat_id).first()
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    participant = (
+        db.query(ChatParticipant)
+        .filter(
+            ChatParticipant.chat_id == chat_id,
+            ChatParticipant.user_id == current_user.id,
+        )
+        .first()
+    )
+
+    if not participant:
+        raise HTTPException(status_code=403, detail="No access to this chat")
+
+    db.query(Message).filter(Message.chat_id == chat_id).delete()
+    db.query(ChatParticipant).filter(ChatParticipant.chat_id == chat_id).delete()
+    db.delete(chat)
+    db.commit()
+
+    return {"ok": True, "detail": "Chat deleted"}
+
+
 def build_chat_response(chat: Chat, db: Session):
     participants = (
         db.query(User)

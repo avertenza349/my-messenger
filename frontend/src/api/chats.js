@@ -4,6 +4,12 @@ export async function getMyChats() {
   return apiRequest("/chats/");
 }
 
+export async function deleteChat(chatId) {
+  return apiRequest(`/chats/${chatId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function getChatMessages(chatId, options = {}) {
   const params = new URLSearchParams();
 

@@ -299,6 +299,7 @@ export default function App() {
           onAvatarChange={handleAvatarChange}
           getChatDisplayName={getChatDisplayName}
           onLogout={auth.logout}
+          onDeleteChat={chats.removeChat}
         />
       )}
 
