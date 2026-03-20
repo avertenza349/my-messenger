@@ -66,14 +66,27 @@ export default function App() {
     }
   }
 
+  // 🔥 ВОТ ТУТ ГЛАВНОЕ ИЗМЕНЕНИЕ
   async function handleAddContact(email) {
     if (!email?.trim()) {
       return { ok: false, error: "Введите email" };
     }
 
     try {
-      await addContactByEmail(email.trim());
+      const addedUser = await addContactByEmail(email.trim());
+
       await loadContacts();
+
+      if (addedUser?.id) {
+        await chats.openPrivateChat(addedUser.id);
+
+        if (isMobile) {
+          setMobileView("chat");
+        }
+      } else {
+        await chats.loadChats();
+      }
+
       auth.setMessage("Контакт добавлен");
       auth.setError("");
       return { ok: true };
@@ -83,8 +96,8 @@ export default function App() {
 
       const message =
         rawMessage.includes("404") ||
-          normalizedMessage.includes("not found") ||
-          normalizedMessage.includes("не найден")
+        normalizedMessage.includes("not found") ||
+        normalizedMessage.includes("не найден")
           ? "Пользователь не найден"
           : rawMessage || "Не удалось добавить контакт";
 
@@ -148,6 +161,7 @@ export default function App() {
       return { ok: false };
     }
   }
+
   async function handleAvatarChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -233,8 +247,6 @@ export default function App() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-
 
   useWebSocket(localStorage.getItem("access_token"), async (data) => {
     if (!auth.currentUser) return;
