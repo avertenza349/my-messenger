@@ -1,17 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { getUsers, getContacts, addContactByEmail, uploadMyAvatar } from "./api/users";
-
+import { useEffect, useMemo, useState } from "react";
+import {
+  getUsers,
+  getContacts,
+  addContactByEmail,
+  uploadMyAvatar,
+} from "./api/users";
 import { useAuth } from "./hooks/useAuth";
 import { useChats } from "./hooks/useChats";
 import { useWebSocket } from "./hooks/useWebSocket";
-
 import AuthForm from "./components/AuthForm";
 import Sidebar from "./components/Sidebar";
 import ChatWindow from "./components/ChatWindow";
-
 import { styles } from "./styles";
 import "./App.css";
-
 
 export default function App() {
   const auth = useAuth();
@@ -20,64 +21,66 @@ export default function App() {
   const [users, setUsers] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [contactEmail, setContactEmail] = useState("");
-
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [mobileView, setMobileView] = useState("chats");
-
   const [newMessage, setNewMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
 
-  const handleSocketMessage = useCallback(async (data) => {
-    console.log("WS:", data);
-
-    if (data?.type !== "new_message") return;
-
-    await chats.loadChats();
-
-    if (chats.selectedChat && data.chat_id === chats.selectedChat.id) {
-      chats.setMessages((prev) => {
-        const exists = prev.some((msg) => msg.id === data.message.id);
-        if (exists) return prev;
-        return [...prev, data.message];
-      });
-    }
-  }, [chats.selectedChat, chats.loadChats, chats.setMessages]);
-
-  // ===== MAP USERS =====
   const usersMap = useMemo(() => {
     const map = {};
-    users.forEach((u) => (map[u.id] = u));
-    contacts.forEach((u) => (map[u.id] = u));
+
+    users.forEach((u) => {
+      map[u.id] = u;
+    });
+
+    contacts.forEach((u) => {
+      map[u.id] = u;
+    });
+
     return map;
   }, [users, contacts]);
 
-  // ===== LOAD DATA =====
   async function loadUsers() {
-    const data = await getUsers();
-    setUsers(data);
+    try {
+      const data = await getUsers();
+      setUsers(data);
+    } catch (err) {
+      auth.setError(err.message || "Не удалось загрузить пользователей");
+    }
   }
 
   async function loadContacts() {
-    const data = await getContacts();
-    setContacts(data);
+    try {
+      const data = await getContacts();
+      setContacts(data);
+    } catch (err) {
+      auth.setError(err.message || "Не удалось загрузить контакты");
+    }
   }
 
-  // ===== CONTACTS =====
   async function handleAddContact(e) {
     e.preventDefault();
 
     if (!contactEmail.trim()) return;
 
-    await addContactByEmail(contactEmail.trim());
-    setContactEmail("");
-    await loadContacts();
+    try {
+      await addContactByEmail(contactEmail.trim());
+      setContactEmail("");
+      await loadContacts();
+      auth.setMessage("Контакт добавлен");
+      auth.setError("");
+    } catch (err) {
+      auth.setError(err.message || "Не удалось добавить контакт");
+    }
   }
 
-  // ===== AUTH =====
   async function handleLogin(e) {
     e.preventDefault();
 
-    const user = await auth.login(auth.loginForm.email, auth.loginForm.password);
+    const user = await auth.login(
+      auth.loginForm.email,
+      auth.loginForm.password
+    );
 
     if (user) {
       await Promise.all([loadUsers(), loadContacts(), chats.loadChats()]);
@@ -89,19 +92,26 @@ export default function App() {
     await auth.register(auth.registerForm);
   }
 
-  // ===== CHAT ACTIONS =====
   async function handleOpenPrivateChat(e, userId) {
     e.preventDefault();
-    await chats.openPrivateChat(userId);
 
-    if (isMobile) setMobileView("chat");
+    try {
+      await chats.openPrivateChat(userId);
+      if (isMobile) setMobileView("chat");
+    } catch (err) {
+      auth.setError(err.message || "Не удалось открыть чат");
+    }
   }
 
   async function handleCreateGroup(e) {
     e.preventDefault();
-    await chats.createGroup(chats.groupTitle, chats.groupParticipantIds);
 
-    if (isMobile) setMobileView("chat");
+    try {
+      await chats.createGroup(chats.groupTitle, chats.groupParticipantIds);
+      if (isMobile) setMobileView("chat");
+    } catch (err) {
+      auth.setError(err.message || "Не удалось создать группу");
+    }
   }
 
   async function handleAvatarChange(e) {
@@ -122,47 +132,102 @@ export default function App() {
 
   async function handleSendMessage(e) {
     e.preventDefault();
+
     if (!chats.selectedChat || !newMessage.trim()) return;
 
-    await chats.send(chats.selectedChat.id, newMessage);
-    await chats.loadMessages(chats.selectedChat.id);
-    await chats.loadChats();
-    setNewMessage("");
+    try {
+      await chats.send(chats.selectedChat.id, newMessage);
+      setNewMessage("");
+      await chats.loadMessages(chats.selectedChat.id);
+      await chats.loadChats();
+    } catch (err) {
+      auth.setError(err.message || "Не удалось отправить сообщение");
+    }
   }
 
   async function handleSendImage(e) {
     e.preventDefault();
+
     if (!chats.selectedChat || !selectedImage) return;
 
-    await chats.sendImg(chats.selectedChat.id, selectedImage);
-    await chats.loadMessages(chats.selectedChat.id);
-    await chats.loadChats();
-    setSelectedImage(null);
+    try {
+      await chats.sendImg(chats.selectedChat.id, selectedImage);
+      setSelectedImage(null);
+      await chats.loadMessages(chats.selectedChat.id);
+      await chats.loadChats();
+    } catch (err) {
+      auth.setError(err.message || "Не удалось отправить изображение");
+    }
   }
 
-  // ===== MOBILE =====
+  function getChatDisplayName(chat) {
+    if (chat.is_group) return chat.title;
+
+    const other = chat.participants.find(
+      (p) => p.id !== auth.currentUser?.id
+    );
+
+    return other?.username || "Чат";
+  }
+
+  useEffect(() => {
+    async function init() {
+      try {
+        const user = await auth.bootstrapAuth();
+
+        if (user) {
+          await Promise.all([loadUsers(), loadContacts(), chats.loadChats()]);
+        }
+      } catch (err) {
+        auth.setError(err.message || "Не удалось восстановить сессию");
+      }
+    }
+
+    init();
+  }, []);
+
   useEffect(() => {
     function handleResize() {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
-      if (!mobile) setMobileView("chats");
+
+      if (!mobile) {
+        setMobileView("chats");
+      }
     }
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ===== LOAD MESSAGES =====
   useEffect(() => {
     if (chats.selectedChat) {
       chats.loadMessages(chats.selectedChat.id);
     }
   }, [chats.selectedChat]);
 
-  // ===== WEBSOCKET =====
-  useWebSocket(localStorage.getItem("access_token"), handleSocketMessage);
+  useWebSocket(localStorage.getItem("access_token"), async (data) => {
+    console.log("WS:", data);
 
-  // ===== AUTH SCREEN =====
+    if (!auth.currentUser) return;
+
+    if (data?.type === "new_message") {
+      await chats.loadChats();
+
+      if (
+        chats.selectedChat &&
+        (data.chat_id === chats.selectedChat.id ||
+          data.chat?.id === chats.selectedChat.id)
+      ) {
+        await chats.loadMessages(chats.selectedChat.id);
+      }
+    }
+  });
+
+  if (auth.isAuthLoading) {
+    return <div style={{ padding: 20 }}>Загрузка...</div>;
+  }
+
   if (!auth.currentUser) {
     return (
       <AuthForm
@@ -180,64 +245,50 @@ export default function App() {
     );
   }
 
-  // ===== MAIN UI =====
   return (
     <div style={styles.appContainer}>
       {(!isMobile || mobileView === "chats") && (
         <Sidebar
           currentUser={auth.currentUser}
+          chats={chats.chats}
+          selectedChat={chats.selectedChat}
+          setSelectedChat={(chat) => {
+            chats.setSelectedChat(chat);
+            if (isMobile) setMobileView("chat");
+          }}
           contacts={contacts}
+          users={users}
+          usersMap={usersMap}
           contactEmail={contactEmail}
           setContactEmail={setContactEmail}
           onAddContact={handleAddContact}
           onOpenPrivateChat={handleOpenPrivateChat}
           groupTitle={chats.groupTitle}
           setGroupTitle={chats.setGroupTitle}
-          users={users}
           groupParticipantIds={chats.groupParticipantIds}
-          onToggleGroupParticipant={chats.toggleGroupParticipant}
-          onCreateGroupChat={handleCreateGroup}
-          chats={chats.chats}
-          selectedChat={chats.selectedChat}
+          toggleGroupParticipant={chats.toggleGroupParticipant}
+          onCreateGroup={handleCreateGroup}
           onAvatarChange={handleAvatarChange}
-          onSelectChat={(chat) => {
-            chats.setSelectedChat(chat);
-            if (isMobile) setMobileView("chat");
-          }}
-          getChatDisplayName={(chat) => {
-            if (chat.is_group) return chat.title;
-
-            const other = chat.participants.find(
-              (p) => p.id !== auth.currentUser.id
-            );
-            return other?.username || "Чат";
-          }}
+          getChatDisplayName={getChatDisplayName}
           onLogout={auth.logout}
         />
       )}
 
       {(!isMobile || mobileView === "chat") && (
         <ChatWindow
-          isMobile={isMobile}
-          selectedChat={chats.selectedChat}
           currentUser={auth.currentUser}
-          usersMap={usersMap}
+          selectedChat={chats.selectedChat}
           messages={chats.messages}
           newMessage={newMessage}
           setNewMessage={setNewMessage}
+          selectedImage={selectedImage}
+          setSelectedImage={setSelectedImage}
           onSendMessage={handleSendMessage}
           onSendImage={handleSendImage}
-          setSelectedImage={setSelectedImage}
-          selectedImage={selectedImage}
           onBack={() => setMobileView("chats")}
-          getChatDisplayName={(chat) => {
-            if (chat.is_group) return chat.title;
-
-            const other = chat.participants.find(
-              (p) => p.id !== auth.currentUser.id
-            );
-            return other?.username || "Чат";
-          }}
+          isMobile={isMobile}
+          usersMap={usersMap}
+          getChatDisplayName={getChatDisplayName}
           error={auth.error}
           message={auth.message}
         />

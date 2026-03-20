@@ -3,13 +3,11 @@ import { registerUser, loginUser, getCurrentUser } from "../api/auth";
 
 export function useAuth() {
   const [mode, setMode] = useState("login");
-
   const [registerForm, setRegisterForm] = useState({
     email: "",
     username: "",
     password: "",
   });
-
   const [loginForm, setLoginForm] = useState({
     email: "",
     password: "",
@@ -18,6 +16,7 @@ export function useAuth() {
   const [currentUser, setCurrentUser] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   async function loadCurrentUser() {
     try {
@@ -28,6 +27,26 @@ export function useAuth() {
     } catch {
       setCurrentUser(null);
       return null;
+    }
+  }
+
+  async function bootstrapAuth() {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      setIsAuthLoading(false);
+      return null;
+    }
+
+    try {
+      const user = await loadCurrentUser();
+      return user;
+    } catch {
+      localStorage.removeItem("access_token");
+      setCurrentUser(null);
+      return null;
+    } finally {
+      setIsAuthLoading(false);
     }
   }
 
@@ -82,7 +101,9 @@ export function useAuth() {
     message,
     setError,
     setMessage,
+    isAuthLoading,
     loadCurrentUser,
+    bootstrapAuth,
     login,
     register,
     logout,
