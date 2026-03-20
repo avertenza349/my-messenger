@@ -18,6 +18,75 @@ export const styles = {
     position: "relative",
   },
 
+  sidebarViewport: {
+    width: "100%",
+    height: "100%",
+    overflow: "hidden",
+  },
+
+  sidebarBody: {
+    flex: 1,
+    minHeight: 0,
+    overflowY: "auto",
+    paddingRight: 2,
+  },
+
+  contactsHeaderRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 12,
+    flexShrink: 0,
+  },
+
+  contactsBackButton: {
+    width: 40,
+    height: 40,
+    borderRadius: "50%",
+    border: "1px solid #cbd5e1",
+    background: "#fff",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 18,
+    padding: 0,
+    flexShrink: 0,
+  },
+
+  contactsBody: {
+    flex: 1,
+    minHeight: 0,
+    overflowY: "auto",
+    paddingBottom: 90,
+    paddingRight: 2,
+  },
+
+  contactsListCard: {
+    border: "1px solid #dbe2ea",
+    borderRadius: 14,
+    background: "#fff",
+    padding: 12,
+  },
+
+  sidebarScreen: {
+    width: "50%",
+    height: "100%",
+    boxSizing: "border-box",
+    paddingRight: 4,
+    display: "flex",
+    flexDirection: "column",
+    minHeight: 0,
+    position: "relative",
+  },
+
+  sidebarTrack: {
+    display: "flex",
+    width: "200%",
+    height: "100%",
+    transition: "transform 0.28s ease",
+  },
+
   sidebarPanelsViewport: {
     width: "100%",
     height: "100%",

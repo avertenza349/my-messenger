@@ -117,17 +117,17 @@ export default function Sidebar({
   return (
     <>
       <aside style={styles.sidebar}>
-        <div style={styles.sidebarPanelsViewport}>
+        <div style={styles.sidebarViewport}>
           <div
             style={{
-              ...styles.sidebarPanelsTrack,
+              ...styles.sidebarTrack,
               transform:
                 activePanel === "main"
                   ? "translateX(0%)"
-                  : "translateX(-100%)",
+                  : "translateX(-50%)",
             }}
           >
-            <div style={styles.sidebarPanel}>
+            <section style={styles.sidebarScreen}>
               <div style={styles.sidebarHeader}>
                 <h2 style={{ margin: 0, fontSize: 22 }}>Чаты</h2>
                 <button style={styles.smallButton} onClick={onLogout}>
@@ -188,67 +188,67 @@ export default function Sidebar({
                 </div>
               </div>
 
-              <div style={styles.blockCompact}>
-                <GroupCreator
-                  groupTitle={groupTitle}
-                  setGroupTitle={setGroupTitle}
-                  users={users}
-                  groupParticipantIds={groupParticipantIds}
-                  toggleGroupParticipant={toggleGroupParticipant}
-                  onCreateGroup={onCreateGroup}
-                />
-              </div>
-
-              <div style={styles.blockCompact}>
-                <div style={styles.blockHeader}>
-                  <h3 style={styles.blockTitle}>Мои чаты</h3>
+              <div style={styles.sidebarBody}>
+                <div style={styles.blockCompact}>
+                  <GroupCreator
+                    groupTitle={groupTitle}
+                    setGroupTitle={setGroupTitle}
+                    users={users}
+                    groupParticipantIds={groupParticipantIds}
+                    toggleGroupParticipant={toggleGroupParticipant}
+                    onCreateGroup={onCreateGroup}
+                  />
                 </div>
 
-                <ChatList
-                  chats={chats}
-                  selectedChat={selectedChat}
-                  setSelectedChat={setSelectedChat}
-                  getChatDisplayName={getChatDisplayName}
-                />
+                <div style={styles.blockCompact}>
+                  <div style={styles.blockHeader}>
+                    <h3 style={styles.blockTitle}>Мои чаты</h3>
+                  </div>
+
+                  <ChatList
+                    chats={chats}
+                    selectedChat={selectedChat}
+                    setSelectedChat={setSelectedChat}
+                    getChatDisplayName={getChatDisplayName}
+                  />
+                </div>
               </div>
-            </div>
+            </section>
 
-            <div style={styles.sidebarPanel}>
-              <div style={styles.contactsScreen}>
-                <div style={styles.contactsScreenTitle}>Контакты</div>
+            <section style={styles.sidebarScreen}>
+              <div style={styles.contactsHeaderRow}>
+                <button
+                  type="button"
+                  style={styles.contactsBackButton}
+                  onClick={backToMainPanel}
+                  title="Назад"
+                >
+                  ←
+                </button>
 
-                <div style={styles.contactsScreenList}>
+                <h2 style={{ margin: 0, fontSize: 22 }}>Контакты</h2>
+              </div>
+
+              <div style={styles.contactsBody}>
+                <div style={styles.contactsListCard}>
                   <ContactList
                     contacts={contacts}
                     onOpenPrivateChat={onOpenPrivateChat}
                   />
                 </div>
               </div>
-            </div>
+
+              <button
+                type="button"
+                style={styles.floatingAddButton}
+                onClick={openAddContactModal}
+                title="Добавить контакт"
+              >
+                +
+              </button>
+            </section>
           </div>
         </div>
-
-        {activePanel === "contacts" && (
-          <>
-            <button
-              type="button"
-              style={styles.contactsBackFloating}
-              onClick={backToMainPanel}
-              title="Назад"
-            >
-              ←
-            </button>
-
-            <button
-              type="button"
-              style={styles.floatingAddButton}
-              onClick={openAddContactModal}
-              title="Добавить контакт"
-            >
-              +
-            </button>
-          </>
-        )}
       </aside>
 
       {isAddContactModalOpen && (
