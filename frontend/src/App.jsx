@@ -235,14 +235,20 @@ export default function App() {
     if (!auth.currentUser) return;
 
     if (data?.type === "new_message") {
-      await chats.loadChats();
+      const incomingChatId = data.chat_id || data.chat?.id;
+      const isCurrentChat = chats.selectedChat?.id === incomingChatId;
 
-      if (
-        chats.selectedChat &&
-        (data.chat_id === chats.selectedChat.id ||
-          data.chat?.id === chats.selectedChat.id)
-      ) {
-        await chats.loadMessages(chats.selectedChat.id);
+      if (data.message) {
+        chats.updateChatLastMessage(incomingChatId, data.message);
+      } else {
+        await chats.loadChats();
+      }
+
+      if (isCurrentChat) {
+        await chats.loadMessages(incomingChatId);
+        chats.setSelectedChat(chats.selectedChat);
+      } else {
+        chats.incrementUnread(incomingChatId);
       }
     }
   });

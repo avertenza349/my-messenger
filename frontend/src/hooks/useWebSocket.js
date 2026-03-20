@@ -11,6 +11,11 @@ export function useWebSocket(token, onMessage) {
   useEffect(() => {
     if (!token) return;
 
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
     const ws = new WebSocket(`ws://127.0.0.1:8000/ws?token=${token}`);
     wsRef.current = ws;
 
@@ -40,8 +45,10 @@ export function useWebSocket(token, onMessage) {
     };
 
     return () => {
-      if (ws.readyState === WebSocket.OPEN) {
+      try {
         ws.close();
+      } catch (e) {
+        console.error("WebSocket close error:", e);
       }
 
       if (wsRef.current === ws) {

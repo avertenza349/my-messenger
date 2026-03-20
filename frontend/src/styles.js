@@ -507,15 +507,23 @@ export const styles = {
   chatList: {
     display: "flex",
     flexDirection: "column",
-    gap: 1,
+    alignItems: "stretch",
+    gap: 8,
+    width: "100%",
   },
 
   chatItem: {
+    width: "100%",
+    display: "block",
+    boxSizing: "border-box",
+    textAlign: "left",
     border: "1px solid #dbe2ea",
     borderRadius: 10,
     padding: "8px 10px",
     cursor: "pointer",
     background: "#fff",
+    appearance: "none",
+    WebkitAppearance: "none",
   },
 
   chatTitleRow: {
@@ -532,29 +540,40 @@ export const styles = {
   },
 
   unreadBadge: {
-    minWidth: 18,
-    height: 18,
+    minWidth: 22,
+    height: 22,
+    padding: "0 6px",
     borderRadius: 999,
-    background: "#2563eb",
-    color: "#fff",
+    background: "#ef4444",
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: 700,
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: 11,
-    padding: "0 5px",
+    flexShrink: 0,
+  },
+
+  chatItemHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    marginBottom: 4,
   },
 
   chatMeta: {
-    fontSize: 13,
-    color: "#64748b",
-    marginBottom: 2,
-    lineHeight: 1.2,
+    fontSize: 12,
+    color: "#6b7280",
+    marginBottom: 4,
   },
 
   chatPreview: {
-    fontSize: 14,
-    color: "#334155",
-    lineHeight: 1.2,
+    fontSize: 13,
+    color: "#374151",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
 
   chatArea: {

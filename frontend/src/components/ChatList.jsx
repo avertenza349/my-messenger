@@ -9,11 +9,11 @@ export default function ChatList({
   const safeChats = Array.isArray(chats) ? chats : [];
 
   if (safeChats.length === 0) {
-    return <div style={styles.mutedText}>Пока нет чатов</div>;
+    return <p>Пока нет чатов</p>;
   }
 
   return (
-    <div style={styles.chatList}>
+    <>
       {safeChats.map((chat) => {
         const isSelected = selectedChat?.id === chat.id;
 
@@ -25,18 +25,17 @@ export default function ChatList({
         return (
           <button
             key={chat.id}
-            type="button"
             onClick={() => setSelectedChat(chat)}
             style={{
               ...styles.chatItem,
               ...(isSelected ? styles.chatItemActive : {}),
             }}
           >
-            <div style={styles.chatTitleRow}>
+            <div style={styles.chatItemHeader}>
               <strong>{getChatDisplayName(chat)}</strong>
 
-              {chat.unread_count > 0 ? (
-                <span style={styles.unreadBadge}>{chat.unread_count}</span>
+              {chat.unreadCount > 0 ? (
+                <span style={styles.unreadBadge}>{chat.unreadCount}</span>
               ) : null}
             </div>
 
@@ -48,6 +47,6 @@ export default function ChatList({
           </button>
         );
       })}
-    </div>
+    </>
   );
 }
