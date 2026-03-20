@@ -526,6 +526,11 @@ export const styles = {
     marginBottom: 2,
   },
 
+  chatItemActive: {
+    border: "1px solid #93c5fd",
+    background: "#eff6ff",
+  },
+
   unreadBadge: {
     minWidth: 18,
     height: 18,
@@ -540,14 +545,14 @@ export const styles = {
   },
 
   chatMeta: {
-    fontSize: 11,
+    fontSize: 13,
     color: "#64748b",
     marginBottom: 2,
     lineHeight: 1.2,
   },
 
   chatPreview: {
-    fontSize: 12,
+    fontSize: 14,
     color: "#334155",
     lineHeight: 1.2,
   },
