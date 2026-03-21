@@ -904,6 +904,7 @@ export const styles = {
     padding: 12,
     borderRadius: 12,
     border: "1px solid #d1d5db",
+    minWidth: 0,
   },
 
   messageAuthor: {
@@ -1099,5 +1100,56 @@ export const styles = {
     padding: 6,
     borderRadius: 8,
     transition: "background 0.15s",
+  },
+
+  messageRow: {
+    display: "flex",
+    width: "100%",
+  },
+
+  messageRowMine: {
+    justifyContent: "flex-end",
+  },
+
+  messageRowOther: {
+    justifyContent: "flex-start",
+  },
+
+  messageWithAvatar: {
+    display: "flex",
+    alignItems: "flex-end",
+    gap: 8,
+    maxWidth: "100%",
+  },
+
+  groupMessageAvatar: {
+    width: 32,
+    height: 32,
+    minWidth: 32,
+    borderRadius: "50%",
+    overflow: "hidden",
+    background: "#e2e8f0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  groupMessageAvatarImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    display: "block",
+  },
+
+  groupMessageAvatarFallback: {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 13,
+    fontWeight: 700,
+    color: "#334155",
   },
 };

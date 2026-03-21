@@ -90,16 +90,42 @@ export default function ChatWindow({
   const shouldAutoScrollRef = useRef(true);
   const emojiRef = useRef(null);
 
-
   const [viewerImage, setViewerImage] = useState(null);
   const [viewerZoom, setViewerZoom] = useState(1);
   const [isDragOver, setIsDragOver] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
 
   const EMOJIS = [
-    "😀", "😁", "😂", "🤣", "😊", "😍", "😘", "😎", "🤔", "😢",
-    "😭", "😡", "👍", "👎", "🙏", "👏", "🔥", "💯", "❤️", "💔",
-    "🎉", "🥳", "😴", "🤯", "😱", "🤗", "🤩", "😇", "🤝", "💪"
+    "😀",
+    "😁",
+    "😂",
+    "🤣",
+    "😊",
+    "😍",
+    "😘",
+    "😎",
+    "🤔",
+    "😢",
+    "😭",
+    "😡",
+    "👍",
+    "👎",
+    "🙏",
+    "👏",
+    "🔥",
+    "💯",
+    "❤️",
+    "💔",
+    "🎉",
+    "🥳",
+    "😴",
+    "🤯",
+    "😱",
+    "🤗",
+    "🤩",
+    "😇",
+    "🤝",
+    "💪",
   ];
 
   function addEmoji(emoji) {
@@ -144,6 +170,30 @@ export default function ChatWindow({
       getUserDisplayName(otherParticipant)?.[0]?.toUpperCase() || "U";
 
     return <div style={styles.chatHeaderAvatarFallback}>{firstLetter}</div>;
+  }
+
+  function renderMessageAvatar(sender) {
+    const avatarUrl = getFullAvatarUrl(sender?.avatar_url);
+
+    if (avatarUrl) {
+      return (
+        <div style={styles.groupMessageAvatar}>
+          <img
+            src={avatarUrl}
+            alt={getUserDisplayName(sender)}
+            style={styles.groupMessageAvatarImage}
+          />
+        </div>
+      );
+    }
+
+    const firstLetter = getUserDisplayName(sender)?.[0]?.toUpperCase() || "U";
+
+    return (
+      <div style={styles.groupMessageAvatar}>
+        <div style={styles.groupMessageAvatarFallback}>{firstLetter}</div>
+      </div>
+    );
   }
 
   function scrollToBottom(behavior = "auto") {
@@ -394,7 +444,9 @@ export default function ChatWindow({
           <div style={styles.chatHeaderAvatar}>{renderHeaderAvatar()}</div>
 
           <div style={styles.chatHeaderTitleWrap}>
-            <h2 style={styles.chatHeaderTitle}>{getChatDisplayName(selectedChat)}</h2>
+            <h2 style={styles.chatHeaderTitle}>
+              {getChatDisplayName(selectedChat)}
+            </h2>
           </div>
         </div>
       </div>
@@ -431,6 +483,8 @@ export default function ChatWindow({
             const isMine = msg.sender_id === currentUser.id;
             const isImageMessage =
               msg.message_type === "image" && !!msg.image_url;
+            const sender = usersMap[msg.sender_id];
+            const showGroupAvatar = selectedChat.is_group && !isMine;
 
             return (
               <div key={msg.id} style={{ width: "100%" }}>
@@ -444,43 +498,48 @@ export default function ChatWindow({
 
                 <div
                   style={{
-                    display: "flex",
-                    justifyContent: isMine ? "flex-end" : "flex-start",
-                    width: "100%",
+                    ...styles.messageRow,
+                    ...(isMine
+                      ? styles.messageRowMine
+                      : styles.messageRowOther),
                   }}
                 >
-                  <div
-                    style={{
-                      ...styles.messageBubble,
-                      background: isMine ? "#dbeafe" : "#fff",
-                      position: "relative",
-                      paddingBottom: 22,
-                    }}
-                  >
-                    {!isMine && (
-                      <div style={styles.messageAuthor}>
-                        {getUserDisplayName(usersMap[msg.sender_id])}
+                  <div style={styles.messageWithAvatar}>
+                    {showGroupAvatar && renderMessageAvatar(sender)}
+
+                    <div
+                      style={{
+                        ...styles.messageBubble,
+                        background: isMine ? "#dbeafe" : "#fff",
+                        position: "relative",
+                        paddingBottom: 22,
+                      }}
+                    >
+                      {!isMine && (
+                        <div style={styles.messageAuthor}>
+                          {getUserDisplayName(usersMap[msg.sender_id])}
+                        </div>
+                      )}
+
+                      {isImageMessage ? (
+                        <>
+                          <img
+                            src={msg.image_url}
+                            alt="Изображение"
+                            style={styles.messageImage}
+                            onClick={() => openImageViewer(msg.image_url)}
+                          />
+                          {msg.content && (
+                            <div style={styles.imageCaption}>{msg.content}</div>
+                          )}
+                        </>
+                      ) : (
+                        <div style={styles.messageText}>{msg.content}</div>
+                      )}
+
+                      <div style={styles.messageTime}>
+                        {formatMessageTime(msg.created_at)}
                       </div>
-                    )}
-
-                    {isImageMessage ? (
-                      <>
-                        <img
-                          src={msg.image_url}
-                          alt="Изображение"
-                          style={styles.messageImage}
-                          onClick={() => openImageViewer(msg.image_url)}
-                        />
-                        {msg.content && (
-                          <div style={styles.imageCaption}>{msg.content}</div>
-                        )}
-                      </>
-                    ) : (
-                      <div style={styles.messageText}>{msg.content}</div>
-                    )}
-
-                    <div style={styles.messageTime}>
-                      {formatMessageTime(msg.created_at)}
                     </div>
                   </div>
                 </div>
@@ -490,11 +549,8 @@ export default function ChatWindow({
         )}
       </div>
 
-      <div style={{ ...styles.chatFooter, position: "relative" }}>
-
+      <div style={{ position: "relative" }}>
         <form onSubmit={onSendMessage} style={styles.messageComposer}>
-
-          {/* кнопка эмодзи */}
           <button
             type="button"
             style={styles.iconButton}
@@ -537,7 +593,6 @@ export default function ChatWindow({
           </button>
         </form>
 
-        {/* 🔥 ПАНЕЛЬ ЭМОДЗИ (правильное место) */}
         {emojiOpen && (
           <div style={styles.emojiPanel} ref={emojiRef}>
             {EMOJIS.map((emoji) => (
@@ -546,7 +601,9 @@ export default function ChatWindow({
                 style={styles.emojiItem}
                 onClick={() => addEmoji(emoji)}
                 onMouseEnter={(e) => (e.target.style.background = "#f1f5f9")}
-                onMouseLeave={(e) => (e.target.style.background = "transparent")}
+                onMouseLeave={(e) =>
+                  (e.target.style.background = "transparent")
+                }
               >
                 {emoji}
               </span>
@@ -585,7 +642,11 @@ export default function ChatWindow({
             onClick={(e) => e.stopPropagation()}
           >
             <div style={styles.imageViewerToolbar}>
-              <button type="button" style={styles.viewerButton} onClick={zoomOut}>
+              <button
+                type="button"
+                style={styles.viewerButton}
+                onClick={zoomOut}
+              >
                 −
               </button>
               <button
@@ -595,7 +656,11 @@ export default function ChatWindow({
               >
                 100%
               </button>
-              <button type="button" style={styles.viewerButton} onClick={zoomIn}>
+              <button
+                type="button"
+                style={styles.viewerButton}
+                onClick={zoomIn}
+              >
                 +
               </button>
               <button
