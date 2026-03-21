@@ -27,7 +27,9 @@ export default function AuthForm({
 
   return (
     <div style={styles.authWrapper}>
-      <h1>Мой мессенджер</h1>
+      <h1>
+        Мой <span style={{ display: "inline-block", marginTop: 6 }}>мессенджер</span>
+      </h1>
 
       <div style={styles.authSwitch}>
         <button onClick={() => setMode("login")} style={styles.button}>
