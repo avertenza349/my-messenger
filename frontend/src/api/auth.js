@@ -1,9 +1,17 @@
 import { apiRequest } from "./client";
 
 export async function registerUser(data) {
+  const normalizedData = {
+    email: data.email?.trim() || "",
+    first_name: data.first_name?.trim() || "",
+    last_name: data.last_name?.trim() || "",
+    password: data.password || "",
+    username: data.username?.trim() ? data.username.trim() : null,
+  };
+
   return apiRequest("/auth/register", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify(normalizedData),
   });
 }
 

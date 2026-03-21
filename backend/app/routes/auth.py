@@ -23,16 +23,20 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    existing_username = db.query(User).filter(User.username == user_data.username).first()
-    if existing_username:
-        raise HTTPException(status_code=400, detail="Username already taken")
+    # ✅ Проверяем username только если он передан
+    if user_data.username:
+        existing_username = (
+            db.query(User).filter(User.username == user_data.username).first()
+        )
+        if existing_username:
+            raise HTTPException(status_code=400, detail="Username already taken")
 
     hashed_password = hash_password(user_data.password)
     verification_token = generate_verification_token()
 
     new_user = User(
         email=user_data.email,
-        username=user_data.username,
+        username=user_data.username or None,  # ✅ важно
         first_name=user_data.first_name,
         last_name=user_data.last_name,
         password_hash=hashed_password,

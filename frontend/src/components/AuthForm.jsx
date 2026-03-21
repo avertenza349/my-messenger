@@ -39,10 +39,12 @@ export default function AuthForm({
       </div>
 
       {mode === "register" ? (
-        <form onSubmit={onRegister} style={styles.form}>
+        <form onSubmit={onRegister} style={styles.form} autoComplete="on">
           <input
             type="text"
+            name="firstName"
             placeholder="Имя"
+            autoComplete="given-name"
             value={safeRegisterForm.first_name}
             onChange={(e) =>
               setRegisterForm({
@@ -55,7 +57,9 @@ export default function AuthForm({
 
           <input
             type="text"
+            name="lastName"
             placeholder="Фамилия"
+            autoComplete="family-name"
             value={safeRegisterForm.last_name}
             onChange={(e) =>
               setRegisterForm({
@@ -68,7 +72,9 @@ export default function AuthForm({
 
           <input
             type="email"
+            name="email"
             placeholder="Email"
+            autoComplete="email"
             value={safeRegisterForm.email}
             onChange={(e) =>
               setRegisterForm({
@@ -81,7 +87,9 @@ export default function AuthForm({
 
           <input
             type="text"
-            placeholder="Username"
+            name="username"
+            placeholder="Username (необязательно)"
+            autoComplete="username"
             value={safeRegisterForm.username}
             onChange={(e) =>
               setRegisterForm({
@@ -94,7 +102,9 @@ export default function AuthForm({
 
           <input
             type="password"
+            name="password"
             placeholder="Password"
+            autoComplete="new-password"
             value={safeRegisterForm.password}
             onChange={(e) =>
               setRegisterForm({
@@ -110,10 +120,12 @@ export default function AuthForm({
           </button>
         </form>
       ) : (
-        <form onSubmit={onLogin} style={styles.form}>
+        <form onSubmit={onLogin} style={styles.form} autoComplete="on">
           <input
             type="email"
+            name="email"
             placeholder="Email"
+            autoComplete="username"
             value={safeLoginForm.email}
             onChange={(e) =>
               setLoginForm({
@@ -125,7 +137,9 @@ export default function AuthForm({
           />
           <input
             type="password"
+            name="password"
             placeholder="Password"
+            autoComplete="current-password"
             value={safeLoginForm.password}
             onChange={(e) =>
               setLoginForm({

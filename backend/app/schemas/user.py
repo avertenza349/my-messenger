@@ -1,9 +1,10 @@
 from pydantic import BaseModel, EmailStr, Field
+from typing import Optional
 
 
 class UserCreate(BaseModel):
     email: EmailStr
-    username: str = Field(min_length=3, max_length=50)
+    username: Optional[str] = Field(default=None, min_length=3, max_length=50)
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
     password: str = Field(min_length=6, max_length=72)
@@ -17,7 +18,7 @@ class UserLogin(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
-    username: str
+    username: Optional[str] = None
     first_name: str | None = None
     last_name: str | None = None
     is_verified: bool

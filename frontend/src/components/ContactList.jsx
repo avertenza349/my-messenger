@@ -7,6 +7,17 @@ export default function ContactList({
 }) {
   const safeContacts = Array.isArray(contacts) ? contacts : [];
 
+  function getUserDisplayName(user) {
+    if (!user) return "Пользователь";
+
+    const fullName = [user.first_name, user.last_name]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    return fullName || user.username || user.email || "Пользователь";
+  }
+
   if (safeContacts.length === 0) {
     return <div style={styles.emptyState}>Пока нет контактов</div>;
   }
@@ -28,7 +39,7 @@ export default function ContactList({
           title="ПКМ — действия с контактом"
         >
           <div style={{ fontWeight: 600 }}>
-            {contact.username || "Без имени"}
+            {getUserDisplayName(contact)}
           </div>
           <div style={{ fontSize: 13, color: "#6b7280" }}>
             {contact.email}

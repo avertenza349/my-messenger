@@ -3,11 +3,15 @@ import { registerUser, loginUser, getCurrentUser } from "../api/auth";
 
 export function useAuth() {
   const [mode, setMode] = useState("login");
+
   const [registerForm, setRegisterForm] = useState({
     email: "",
     username: "",
+    first_name: "",
+    last_name: "",
     password: "",
   });
+
   const [loginForm, setLoginForm] = useState({
     email: "",
     password: "",
@@ -71,9 +75,23 @@ export function useAuth() {
     setError("");
     setMessage("");
 
+    // 🔥 нормализация данных перед отправкой
+    const preparedData = {
+      ...data,
+      first_name: data.first_name?.trim(),
+      last_name: data.last_name?.trim(),
+      username: data.username?.trim() || null,
+    };
+
     try {
-      const result = await registerUser(data);
-      setMessage(`Пользователь ${result.username} успешно зарегистрирован`);
+      const result = await registerUser(preparedData);
+
+      const displayName =
+        [result.first_name, result.last_name].filter(Boolean).join(" ") ||
+        result.username ||
+        result.email;
+
+      setMessage(`Пользователь ${displayName} успешно зарегистрирован`);
       setMode("login");
       return result;
     } catch (err) {

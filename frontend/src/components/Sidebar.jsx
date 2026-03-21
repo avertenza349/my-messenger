@@ -44,6 +44,22 @@ export default function Sidebar({
     ? `http://127.0.0.1:8000${currentUser.avatar_url}`
     : null;
 
+  function getUserDisplayName(user) {
+    if (!user) return "Пользователь";
+
+    const fullName = [user.first_name, user.last_name]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    return fullName || user.username || user.email || "Пользователь";
+  }
+
+  function getUserInitial(user) {
+    const name = getUserDisplayName(user);
+    return name?.[0]?.toUpperCase() || "U";
+  }
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -206,7 +222,7 @@ export default function Sidebar({
                       />
                     ) : (
                       <div style={styles.avatarPlaceholder}>
-                        {currentUser.username?.[0]?.toUpperCase() || "U"}
+                        {getUserInitial(currentUser)}
                       </div>
                     )}
 
@@ -219,7 +235,9 @@ export default function Sidebar({
                   </label>
 
                   <div style={styles.userInfo}>
-                    <div style={styles.userName}>{currentUser.username}</div>
+                    <div style={styles.userName}>
+                      {getUserDisplayName(currentUser)}
+                    </div>
                     <div style={styles.userEmail}>{currentUser.email}</div>
                   </div>
                 </div>
@@ -330,6 +348,7 @@ export default function Sidebar({
               <input
                 type="email"
                 placeholder="Введите email"
+                autoComplete="email"
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
                 style={styles.input}
@@ -393,7 +412,7 @@ export default function Sidebar({
                         onChange={() => toggleGroupParticipant(user.id)}
                       />
                       <span>
-                        {user.username} ({user.email})
+                        {getUserDisplayName(user)} ({user.email})
                       </span>
                     </label>
                   ))
@@ -448,7 +467,7 @@ export default function Sidebar({
                 <div style={styles.modalText}>
                   Вы точно хотите удалить контакт{" "}
                   <strong>
-                    {targetContact?.username || targetContact?.email || "контакт"}
+                    {getUserDisplayName(targetContact)}
                   </strong>
                   ?
                 </div>

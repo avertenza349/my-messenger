@@ -49,6 +49,17 @@ export default function App() {
     return map;
   }, [users, contacts]);
 
+  function getUserDisplayName(user) {
+    if (!user) return "Пользователь";
+
+    const fullName = [user.first_name, user.last_name]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    return fullName || user.username || user.email || "Пользователь";
+  }
+
   async function loadUsers() {
     try {
       const data = await getUsers();
@@ -96,8 +107,8 @@ export default function App() {
 
       const message =
         rawMessage.includes("404") ||
-          normalizedMessage.includes("not found") ||
-          normalizedMessage.includes("не найден")
+        normalizedMessage.includes("not found") ||
+        normalizedMessage.includes("не найден")
           ? "Пользователь не найден"
           : rawMessage || "Не удалось добавить контакт";
 
@@ -234,7 +245,6 @@ export default function App() {
     }
   }
 
-
   function getChatDisplayName(chat) {
     if (chat.is_group) return chat.title;
 
@@ -242,7 +252,7 @@ export default function App() {
       (p) => p.id !== auth.currentUser?.id
     );
 
-    return other?.username || "Чат";
+    return getUserDisplayName(other) || "Чат";
   }
 
   useEffect(() => {
