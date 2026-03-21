@@ -28,7 +28,7 @@ export const styles = {
   },
 
   imageCaption: {
-    marginTop: "8px",
+    marginTop: "4px",
     wordBreak: "break-word",
   },
 
@@ -36,6 +36,75 @@ export const styles = {
     display: "flex",
     justifyContent: "center",
     margin: "14px 0 10px",
+  },
+
+  imageViewerContent: {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+  },
+
+  viewerButton: {
+    minWidth: 52,
+    height: 40,
+    border: "1px solid rgba(255,255,255,0.18)",
+    borderRadius: 10,
+    background: "rgba(255,255,255,0.12)",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: 16,
+  },
+
+  viewerCloseButton: {
+    minWidth: 52,
+    height: 40,
+    border: "1px solid rgba(255,255,255,0.18)",
+    borderRadius: 10,
+    background: "rgba(239,68,68,0.9)",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: 16,
+  },
+
+  imageViewerStage: {
+    flex: 1,
+    overflow: "auto",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  imageViewerImage: {
+    maxWidth: "90vw",
+    maxHeight: "80vh",
+    objectFit: "contain",
+    transformOrigin: "center center",
+    transition: "transform 0.15s ease",
+    cursor: "grab",
+  },
+
+  imageViewerToolbar: {
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+
+  imageViewerOverlay: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 1000,
+    background: "rgba(15, 23, 42, 0.88)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+
+  messageText: {
+    wordBreak: "break-word",
   },
 
   dateDivider: {
@@ -767,9 +836,39 @@ export const styles = {
     marginBottom: 6,
   },
 
+  messagesAreaDragOver: {
+    position: "relative",
+    outline: "2px dashed #2563eb",
+    outlineOffset: "-8px",
+    background: "#eff6ff",
+  },
+
+  dragOverlay: {
+    position: "sticky",
+    top: 12,
+    zIndex: 5,
+    display: "flex",
+    justifyContent: "center",
+    pointerEvents: "none",
+  },
+
+  dragOverlayText: {
+    padding: "10px 16px",
+    borderRadius: 999,
+    background: "rgba(37, 99, 235, 0.95)",
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: 600,
+    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.16)",
+  },
+
   messageImage: {
+    maxWidth: "260px",
     width: "100%",
-    borderRadius: 8,
+    height: "auto",
+    borderRadius: "12px",
+    display: "block",
+    cursor: "zoom-in",
   },
 
   messageForm: {

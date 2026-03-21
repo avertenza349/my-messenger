@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { styles } from "../styles";
 
 function isSameDay(first, second) {
@@ -63,11 +63,16 @@ export default function ChatWindow({
   hasMoreMessages,
 }) {
   const messagesRef = useRef(null);
+  const fileInputRef = useRef(null);
   const restoreDoneRef = useRef({});
   const prependStateRef = useRef(null);
   const prevChatIdRef = useRef(null);
   const prevMessagesLengthRef = useRef(0);
   const shouldAutoScrollRef = useRef(true);
+
+  const [viewerImage, setViewerImage] = useState(null);
+  const [viewerZoom, setViewerZoom] = useState(1);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   function scrollToBottom(behavior = "auto") {
     const container = messagesRef.current;
@@ -85,6 +90,80 @@ export default function ChatWindow({
       threshold
     );
   }
+
+  function openImageViewer(imageUrl) {
+    setViewerImage(imageUrl);
+    setViewerZoom(1);
+  }
+
+  function closeImageViewer() {
+    setViewerImage(null);
+    setViewerZoom(1);
+  }
+
+  function zoomIn() {
+    setViewerZoom((prev) => Math.min(prev + 0.25, 4));
+  }
+
+  function zoomOut() {
+    setViewerZoom((prev) => Math.max(prev - 0.25, 0.5));
+  }
+
+  function resetZoom() {
+    setViewerZoom(1);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+
+    if (!file.type?.startsWith("image/")) {
+      return;
+    }
+
+    setSelectedImage(file);
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    if (!isDragOver) {
+      setIsDragOver(true);
+    }
+  }
+
+  function handleDragLeave(e) {
+    if (e.currentTarget === e.target) {
+      setIsDragOver(false);
+    }
+  }
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (!viewerImage) return;
+
+      if (e.key === "Escape") {
+        closeImageViewer();
+      }
+
+      if (e.key === "+" || e.key === "=") {
+        zoomIn();
+      }
+
+      if (e.key === "-") {
+        zoomOut();
+      }
+
+      if (e.key === "0") {
+        resetZoom();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [viewerImage]);
 
   useEffect(() => {
     const container = messagesRef.current;
@@ -225,7 +304,22 @@ export default function ChatWindow({
         <h2 style={{ margin: 0 }}>{getChatDisplayName(selectedChat)}</h2>
       </div>
 
-      <div ref={messagesRef} style={styles.messagesArea}>
+      <div
+        ref={messagesRef}
+        style={{
+          ...styles.messagesArea,
+          ...(isDragOver ? styles.messagesAreaDragOver : {}),
+        }}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {isDragOver && (
+          <div style={styles.dragOverlay}>
+            <div style={styles.dragOverlayText}>Отпусти изображение, чтобы прикрепить</div>
+          </div>
+        )}
+
         {isLoadingOlder && (
           <div style={styles.historyLoader}>Загружаю старые сообщения...</div>
         )}
@@ -281,6 +375,7 @@ export default function ChatWindow({
                           src={msg.image_url}
                           alt="Изображение"
                           style={styles.messageImage}
+                          onClick={() => openImageViewer(msg.image_url)}
                         />
                         {msg.content && (
                           <div style={styles.imageCaption}>{msg.content}</div>
@@ -312,6 +407,7 @@ export default function ChatWindow({
 
           <label style={styles.iconButton} title="Прикрепить изображение">
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               style={styles.hiddenFileInput}
@@ -343,7 +439,12 @@ export default function ChatWindow({
             <button
               type="button"
               style={styles.clearFileButton}
-              onClick={() => setSelectedImage(null)}
+              onClick={() => {
+                setSelectedImage(null);
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+              }}
             >
               ✕
             </button>
@@ -353,6 +454,41 @@ export default function ChatWindow({
         {error && <div style={styles.errorText}>{error}</div>}
         {message && <div style={styles.successText}>{message}</div>}
       </div>
+
+      {viewerImage && (
+        <div style={styles.imageViewerOverlay} onClick={closeImageViewer}>
+          <div
+            style={styles.imageViewerContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={styles.imageViewerToolbar}>
+              <button type="button" style={styles.viewerButton} onClick={zoomOut}>
+                −
+              </button>
+              <button type="button" style={styles.viewerButton} onClick={resetZoom}>
+                100%
+              </button>
+              <button type="button" style={styles.viewerButton} onClick={zoomIn}>
+                +
+              </button>
+              <button type="button" style={styles.viewerCloseButton} onClick={closeImageViewer}>
+                ✕
+              </button>
+            </div>
+
+            <div style={styles.imageViewerStage}>
+              <img
+                src={viewerImage}
+                alt="Полноэкранный просмотр"
+                style={{
+                  ...styles.imageViewerImage,
+                  transform: `scale(${viewerZoom})`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
