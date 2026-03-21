@@ -208,11 +208,25 @@ export default function App() {
   async function handleSendMessage(e) {
     e.preventDefault();
 
-    if (!chats.selectedChat || !newMessage.trim()) return;
+    if (!chats.selectedChat) return;
+
+    const text = newMessage.trim();
+    const image = selectedImage;
+
+    if (!text && !image) return;
 
     try {
-      await chats.send(chats.selectedChat.id, newMessage);
+      if (image) {
+        await chats.sendImg(chats.selectedChat.id, image);
+      }
+
+      if (text) {
+        await chats.send(chats.selectedChat.id, text);
+      }
+
       setNewMessage("");
+      setSelectedImage(null);
+
       await chats.loadMessages(chats.selectedChat.id);
       await chats.loadChats();
     } catch (err) {
@@ -220,20 +234,6 @@ export default function App() {
     }
   }
 
-  async function handleSendImage(e) {
-    e.preventDefault();
-
-    if (!chats.selectedChat || !selectedImage) return;
-
-    try {
-      await chats.sendImg(chats.selectedChat.id, selectedImage);
-      setSelectedImage(null);
-      await chats.loadMessages(chats.selectedChat.id);
-      await chats.loadChats();
-    } catch (err) {
-      auth.setError(err.message || "Не удалось отправить изображение");
-    }
-  }
 
   function getChatDisplayName(chat) {
     if (chat.is_group) return chat.title;
@@ -353,7 +353,6 @@ export default function App() {
           selectedImage={selectedImage}
           setSelectedImage={setSelectedImage}
           onSendMessage={handleSendMessage}
-          onSendImage={handleSendImage}
           onBack={() => setMobileView("chats")}
           isMobile={isMobile}
           usersMap={usersMap}

@@ -214,6 +214,77 @@ export const styles = {
     color: "#475569",
   },
 
+  iconButton: {
+    width: 42,
+    height: 42,
+    minWidth: 42,
+    borderRadius: "50%",
+    border: "1px solid #cbd5e1",
+    background: "#fff",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 18,
+    userSelect: "none",
+  },
+
+  sendIconButton: {
+    width: 42,
+    height: 42,
+    minWidth: 42,
+    borderRadius: "50%",
+    border: "1px solid #2563eb",
+    background: "#2563eb",
+    color: "#fff",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 18,
+    opacity: 1,
+  },
+
+  selectedFileRow: {
+    marginTop: 8,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    padding: "8px 10px",
+    border: "1px solid #dbeafe",
+    borderRadius: 10,
+    background: "#eff6ff",
+  },
+
+  selectedFileName: {
+    fontSize: 13,
+    color: "#1e3a8a",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+
+  clearFileButton: {
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+    fontSize: 16,
+    color: "#475569",
+  },
+
+  messageComposer: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    width: "100%",
+  },
+
+  composerInput: {
+    flex: 1,
+    paddingRight: 10,
+  },
+
   hiddenFileInput: {
     display: "none",
   },

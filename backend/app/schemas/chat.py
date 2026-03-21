@@ -24,7 +24,7 @@ class ChatParticipantSchema(BaseModel):
 class LastMessageSchema(BaseModel):
     id: int
     sender_id: int
-    content: str
+    content: Optional[str] = None
     created_at: datetime
 
     class Config:

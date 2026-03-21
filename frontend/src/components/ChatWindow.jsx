@@ -49,7 +49,6 @@ export default function ChatWindow({
   newMessage,
   setNewMessage,
   onSendMessage,
-  onSendImage,
   setSelectedImage,
   selectedImage,
   onBack,
@@ -274,7 +273,7 @@ export default function ChatWindow({
                           {isMine
                             ? "Ты"
                             : usersMap[msg.sender_id]?.username ||
-                              `User #${msg.sender_id}`}
+                            `User #${msg.sender_id}`}
                         </div>
                         <div>{msg.content}</div>
                       </div>
@@ -292,32 +291,48 @@ export default function ChatWindow({
       </div>
 
       <div style={styles.chatFooter}>
-        <form onSubmit={onSendMessage} style={styles.messageForm}>
+        <form onSubmit={onSendMessage} style={styles.messageComposer}>
           <input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            style={{ ...styles.input, flex: 1 }}
+            style={{ ...styles.input, ...styles.composerInput }}
             placeholder="Введите сообщение"
           />
-          <button type="submit" style={styles.button}>
-            Отправить
+
+          <label style={styles.iconButton} title="Прикрепить изображение">
+            <input
+              type="file"
+              accept="image/*"
+              style={styles.hiddenFileInput}
+              onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
+            />
+            📎
+          </label>
+
+          <button
+            type="submit"
+            style={styles.sendIconButton}
+            title="Отправить"
+            disabled={!newMessage.trim() && !selectedImage}
+          >
+            ➤
           </button>
         </form>
 
-        <form onSubmit={onSendImage} style={styles.imageForm}>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
-          />
-          <button
-            type="submit"
-            style={styles.button}
-            disabled={!selectedImage}
-          >
-            Отправить картинку
-          </button>
-        </form>
+        {selectedImage && (
+          <div style={styles.selectedFileRow}>
+            <span style={styles.selectedFileName}>
+              Выбрано: {selectedImage.name}
+            </span>
+            <button
+              type="button"
+              style={styles.clearFileButton}
+              onClick={() => setSelectedImage(null)}
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {error && <div style={styles.errorText}>{error}</div>}
         {message && <div style={styles.successText}>{message}</div>}
