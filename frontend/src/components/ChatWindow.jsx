@@ -356,10 +356,8 @@ export default function ChatWindow({
                     style={{
                       ...styles.messageBubble,
                       background: isMine ? "#dbeafe" : "#fff",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "stretch",
-                      gap: 6,
+                      position: "relative",
+                      paddingBottom: 22,
                     }}
                   >
                     {!isMine && (

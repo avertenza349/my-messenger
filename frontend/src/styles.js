@@ -117,10 +117,11 @@ export const styles = {
   },
 
   messageTime: {
+    position: "absolute",
+    right: 8,
+    bottom: 4,
     fontSize: 11,
-    color: "#6b7280",
-    whiteSpace: "nowrap",
-    flexShrink: 0,
+    color: "#64748b",
   },
 
   sidebarViewport: {
@@ -746,6 +747,82 @@ export const styles = {
     alignItems: "center",
     gap: 6,
     marginBottom: 2,
+  },
+
+  chatAvatar: {
+    width: 48,
+    height: 48,
+    minWidth: 48,
+    borderRadius: "50%",
+    overflow: "hidden",
+    background: "#e2e8f0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  chatAvatarImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    display: "block",
+  },
+
+  chatAvatarFallback: {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 18,
+    fontWeight: 600,
+    color: "#334155",
+  },
+
+  chatInfo: {
+    flex: 1,
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    gap: 4,
+  },
+
+  chatTopRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+
+  chatTitleText: {
+    fontWeight: 600,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+
+  chatPreviewText: {
+    fontSize: 13,
+    color: "#64748b",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+
+  chatUnreadBadge: {
+    minWidth: 20,
+    height: 20,
+    padding: "0 6px",
+    borderRadius: 999,
+    background: "#2563eb",
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: 600,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
   },
 
   chatItemActive: {

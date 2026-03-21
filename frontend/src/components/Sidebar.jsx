@@ -260,6 +260,7 @@ export default function Sidebar({
                     setSelectedChat={setSelectedChat}
                     getChatDisplayName={getChatDisplayName}
                     onDeleteChat={onDeleteChat}
+                    currentUser={currentUser}
                   />
                 </div>
               </div>
