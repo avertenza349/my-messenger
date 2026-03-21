@@ -88,10 +88,23 @@ export default function ChatWindow({
   const prevChatIdRef = useRef(null);
   const prevMessagesLengthRef = useRef(0);
   const shouldAutoScrollRef = useRef(true);
+  const emojiRef = useRef(null);
+
 
   const [viewerImage, setViewerImage] = useState(null);
   const [viewerZoom, setViewerZoom] = useState(1);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+
+  const EMOJIS = [
+    "😀", "😁", "😂", "🤣", "😊", "😍", "😘", "😎", "🤔", "😢",
+    "😭", "😡", "👍", "👎", "🙏", "👏", "🔥", "💯", "❤️", "💔",
+    "🎉", "🥳", "😴", "🤯", "😱", "🤗", "🤩", "😇", "🤝", "💪"
+  ];
+
+  function addEmoji(emoji) {
+    setNewMessage((prev) => prev + emoji);
+  }
 
   function getHeaderParticipant(chat) {
     if (!chat || !Array.isArray(chat.participants)) return null;
@@ -223,6 +236,22 @@ export default function ChatWindow({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [viewerImage]);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (emojiRef.current && !emojiRef.current.contains(e.target)) {
+        setEmojiOpen(false);
+      }
+    }
+
+    if (emojiOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [emojiOpen]);
 
   useEffect(() => {
     const container = messagesRef.current;
@@ -461,8 +490,20 @@ export default function ChatWindow({
         )}
       </div>
 
-      <div style={styles.chatFooter}>
+      <div style={{ ...styles.chatFooter, position: "relative" }}>
+
         <form onSubmit={onSendMessage} style={styles.messageComposer}>
+
+          {/* кнопка эмодзи */}
+          <button
+            type="button"
+            style={styles.iconButton}
+            onClick={() => setEmojiOpen((prev) => !prev)}
+            title="Эмодзи"
+          >
+            😊
+          </button>
+
           <input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -495,6 +536,23 @@ export default function ChatWindow({
             ➤
           </button>
         </form>
+
+        {/* 🔥 ПАНЕЛЬ ЭМОДЗИ (правильное место) */}
+        {emojiOpen && (
+          <div style={styles.emojiPanel} ref={emojiRef}>
+            {EMOJIS.map((emoji) => (
+              <span
+                key={emoji}
+                style={styles.emojiItem}
+                onClick={() => addEmoji(emoji)}
+                onMouseEnter={(e) => (e.target.style.background = "#f1f5f9")}
+                onMouseLeave={(e) => (e.target.style.background = "transparent")}
+              >
+                {emoji}
+              </span>
+            ))}
+          </div>
+        )}
 
         {selectedImage && (
           <div style={styles.selectedFileRow}>

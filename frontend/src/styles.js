@@ -1073,4 +1073,31 @@ export const styles = {
     overflow: "hidden",
     textOverflow: "ellipsis",
   },
+
+  emojiPanel: {
+    position: "absolute",
+    bottom: 70,
+    left: 16,
+    width: 260,
+    maxHeight: 220,
+    overflowY: "auto",
+    background: "#fff",
+    border: "1px solid #dbe2ea",
+    borderRadius: 14,
+    boxShadow: "0 12px 30px rgba(15, 23, 42, 0.18)",
+    padding: 10,
+    display: "grid",
+    gridTemplateColumns: "repeat(8, 1fr)",
+    gap: 6,
+    zIndex: 50,
+  },
+
+  emojiItem: {
+    fontSize: 20,
+    cursor: "pointer",
+    textAlign: "center",
+    padding: 6,
+    borderRadius: 8,
+    transition: "background 0.15s",
+  },
 };
