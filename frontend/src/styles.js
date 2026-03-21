@@ -18,6 +18,20 @@ export const styles = {
     position: "relative",
   },
 
+  chatImage: {
+    maxWidth: "260px",
+    width: "100%",
+    height: "auto",
+    borderRadius: "12px",
+    display: "block",
+    marginTop: "6px",
+  },
+
+  imageCaption: {
+    marginTop: "8px",
+    wordBreak: "break-word",
+  },
+
   dateDividerWrapper: {
     display: "flex",
     justifyContent: "center",

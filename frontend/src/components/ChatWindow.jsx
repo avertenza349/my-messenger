@@ -188,7 +188,11 @@ export default function ChatWindow({
     const prevLength = prevMessagesLengthRef.current;
     const currentLength = messages.length;
 
-    if (prependState && prependState.chatId === selectedChat.id && currentLength > prevLength) {
+    if (
+      prependState &&
+      prependState.chatId === selectedChat.id &&
+      currentLength > prevLength
+    ) {
       const newScrollHeight = container.scrollHeight;
       const delta = newScrollHeight - prependState.prevScrollHeight;
       container.scrollTop = prependState.prevScrollTop + delta;
@@ -234,6 +238,8 @@ export default function ChatWindow({
             const showDate =
               !prevMessage || !isSameDay(prevMessage.created_at, msg.created_at);
             const isMine = msg.sender_id === currentUser.id;
+            const isImageMessage =
+              msg.message_type === "image" && !!msg.image_url;
 
             return (
               <div key={msg.id} style={{ width: "100%" }}>
@@ -257,26 +263,31 @@ export default function ChatWindow({
                       ...styles.messageBubble,
                       background: isMine ? "#dbeafe" : "#fff",
                       display: "flex",
-                      alignItems: "flex-end",
-                      gap: 8,
+                      flexDirection: "column",
+                      alignItems: "stretch",
+                      gap: 6,
                     }}
                   >
-                    {msg.message_type === "image" && msg.image_url ? (
-                      <img
-                        src={msg.image_url}
-                        alt="Сообщение"
-                        style={styles.messageImage}
-                      />
-                    ) : (
-                      <div style={{ flex: 1 }}>
-                        <div style={styles.messageAuthor}>
-                          {isMine
-                            ? "Ты"
-                            : usersMap[msg.sender_id]?.username ||
-                            `User #${msg.sender_id}`}
-                        </div>
-                        <div>{msg.content}</div>
+                    {!isMine && (
+                      <div style={styles.messageAuthor}>
+                        {usersMap[msg.sender_id]?.username ||
+                          `User #${msg.sender_id}`}
                       </div>
+                    )}
+
+                    {isImageMessage ? (
+                      <>
+                        <img
+                          src={msg.image_url}
+                          alt="Изображение"
+                          style={styles.messageImage}
+                        />
+                        {msg.content && (
+                          <div style={styles.imageCaption}>{msg.content}</div>
+                        )}
+                      </>
+                    ) : (
+                      <div style={styles.messageText}>{msg.content}</div>
                     )}
 
                     <div style={styles.messageTime}>
@@ -311,7 +322,12 @@ export default function ChatWindow({
 
           <button
             type="submit"
-            style={styles.sendIconButton}
+            style={{
+              ...styles.sendIconButton,
+              opacity: !newMessage.trim() && !selectedImage ? 0.5 : 1,
+              cursor:
+                !newMessage.trim() && !selectedImage ? "not-allowed" : "pointer",
+            }}
             title="Отправить"
             disabled={!newMessage.trim() && !selectedImage}
           >

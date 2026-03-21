@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Query
-from sqlalchemy.orm import Session
-from typing import List
 import os
 import shutil
 import uuid
+from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Query, Request
+from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models.message import Message
@@ -13,22 +14,19 @@ from app.schemas.message import CreateMessage, MessageResponse
 from app.utils.security import get_current_user
 from app.websocket_manager import manager
 
-
 router = APIRouter(prefix="/chats", tags=["messages"])
 
 
-# Проверка: пользователь в чате
 def ensure_user_in_chat(chat_id: int, user_id: int, db: Session):
     participant = db.query(ChatParticipant).filter(
         ChatParticipant.chat_id == chat_id,
-        ChatParticipant.user_id == user_id
+        ChatParticipant.user_id == user_id,
     ).first()
 
     if not participant:
         raise HTTPException(status_code=403, detail="Not a participant of this chat")
 
 
-# Получить сообщения чата
 @router.get("/{chat_id}/messages", response_model=List[MessageResponse])
 def get_chat_messages(
     chat_id: int,
@@ -48,24 +46,21 @@ def get_chat_messages(
     if before_id is not None:
         query = query.filter(Message.id < before_id)
 
-    # Берем последние limit сообщений из нужного диапазона
     messages = (
         query.order_by(Message.id.desc())
         .limit(limit)
         .all()
     )
 
-    # Разворачиваем обратно в старый -> новый
     return list(reversed(messages))
 
 
-# Отправка текстового сообщения
 @router.post("/{chat_id}/messages", response_model=MessageResponse)
 async def send_message(
     chat_id: int,
     data: CreateMessage,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     chat = db.query(Chat).filter(Chat.id == chat_id).first()
     if not chat:
@@ -78,14 +73,13 @@ async def send_message(
         sender_id=current_user.id,
         content=data.content,
         message_type="text",
-        image_url=None
+        image_url=None,
     )
 
     db.add(new_message)
     db.commit()
     db.refresh(new_message)
 
-    # WebSocket payload
     message_payload = {
         "type": "new_message",
         "chat_id": new_message.chat_id,
@@ -97,7 +91,7 @@ async def send_message(
             "message_type": new_message.message_type,
             "image_url": new_message.image_url,
             "created_at": new_message.created_at.isoformat(),
-        }
+        },
     }
 
     participants = db.query(ChatParticipant).filter(
@@ -110,13 +104,13 @@ async def send_message(
     return new_message
 
 
-# Отправка картинки
 @router.post("/{chat_id}/images", response_model=MessageResponse)
 async def send_image(
     chat_id: int,
+    request: Request,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     chat = db.query(Chat).filter(Chat.id == chat_id).first()
     if not chat:
@@ -136,21 +130,21 @@ async def send_image(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    image_url = f"/uploads/{unique_filename}"
+    base_url = str(request.base_url).rstrip("/")
+    image_url = f"{base_url}/uploads/{unique_filename}"
 
     new_message = Message(
         chat_id=chat_id,
         sender_id=current_user.id,
         content=None,
         message_type="image",
-        image_url=image_url
+        image_url=image_url,
     )
 
     db.add(new_message)
     db.commit()
     db.refresh(new_message)
 
-    # WebSocket payload
     message_payload = {
         "type": "new_message",
         "chat_id": new_message.chat_id,
@@ -162,7 +156,7 @@ async def send_image(
             "message_type": new_message.message_type,
             "image_url": new_message.image_url,
             "created_at": new_message.created_at.isoformat(),
-        }
+        },
     }
 
     participants = db.query(ChatParticipant).filter(
