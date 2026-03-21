@@ -40,6 +40,14 @@ function formatDateDivider(dateString) {
   });
 }
 
+function getFullAvatarUrl(avatarUrl) {
+  if (!avatarUrl) return null;
+  if (avatarUrl.startsWith("http://") || avatarUrl.startsWith("https://")) {
+    return avatarUrl;
+  }
+  return `http://127.0.0.1:8000${avatarUrl}`;
+}
+
 export default function ChatWindow({
   isMobile,
   selectedChat,
@@ -73,6 +81,49 @@ export default function ChatWindow({
   const [viewerImage, setViewerImage] = useState(null);
   const [viewerZoom, setViewerZoom] = useState(1);
   const [isDragOver, setIsDragOver] = useState(false);
+
+  function getHeaderParticipant(chat) {
+    if (!chat || !Array.isArray(chat.participants)) return null;
+
+    if (chat.is_group) {
+      return null;
+    }
+
+    return (
+      chat.participants.find((participant) => participant.id !== currentUser?.id) ||
+      chat.participants[0] ||
+      null
+    );
+  }
+
+  function renderHeaderAvatar() {
+    if (!selectedChat) return null;
+
+    if (selectedChat.is_group) {
+      return <div style={styles.chatHeaderAvatarFallback}>👥</div>;
+    }
+
+    const otherParticipant = getHeaderParticipant(selectedChat);
+    const avatarUrl = getFullAvatarUrl(otherParticipant?.avatar_url);
+
+    if (avatarUrl) {
+      return (
+        <img
+          src={avatarUrl}
+          alt={otherParticipant?.username || "Аватар"}
+          style={styles.chatHeaderAvatarImage}
+        />
+      );
+    }
+
+    const firstLetter = (
+      otherParticipant?.username?.[0] ||
+      getChatDisplayName(selectedChat)?.[0] ||
+      "U"
+    ).toUpperCase();
+
+    return <div style={styles.chatHeaderAvatarFallback}>{firstLetter}</div>;
+  }
 
   function scrollToBottom(behavior = "auto") {
     const container = messagesRef.current;
@@ -296,12 +347,19 @@ export default function ChatWindow({
   return (
     <div style={styles.chatArea}>
       <div style={styles.chatHeader}>
-        {isMobile && (
-          <button style={styles.smallButton} onClick={onBack}>
-            Назад
-          </button>
-        )}
-        <h2 style={{ margin: 0 }}>{getChatDisplayName(selectedChat)}</h2>
+        <div style={styles.chatHeaderLeft}>
+          {isMobile && (
+            <button style={styles.smallButton} onClick={onBack}>
+              Назад
+            </button>
+          )}
+
+          <div style={styles.chatHeaderAvatar}>{renderHeaderAvatar()}</div>
+
+          <div style={styles.chatHeaderTitleWrap}>
+            <h2 style={styles.chatHeaderTitle}>{getChatDisplayName(selectedChat)}</h2>
+          </div>
+        </div>
       </div>
 
       <div
@@ -316,7 +374,9 @@ export default function ChatWindow({
       >
         {isDragOver && (
           <div style={styles.dragOverlay}>
-            <div style={styles.dragOverlayText}>Отпусти изображение, чтобы прикрепить</div>
+            <div style={styles.dragOverlayText}>
+              Отпусти изображение, чтобы прикрепить
+            </div>
           </div>
         )}
 
@@ -463,13 +523,21 @@ export default function ChatWindow({
               <button type="button" style={styles.viewerButton} onClick={zoomOut}>
                 −
               </button>
-              <button type="button" style={styles.viewerButton} onClick={resetZoom}>
+              <button
+                type="button"
+                style={styles.viewerButton}
+                onClick={resetZoom}
+              >
                 100%
               </button>
               <button type="button" style={styles.viewerButton} onClick={zoomIn}>
                 +
               </button>
-              <button type="button" style={styles.viewerCloseButton} onClick={closeImageViewer}>
+              <button
+                type="button"
+                style={styles.viewerCloseButton}
+                onClick={closeImageViewer}
+              >
                 ✕
               </button>
             </div>

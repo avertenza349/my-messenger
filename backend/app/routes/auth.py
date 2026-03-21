@@ -5,10 +5,8 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse, TokenResponse
-from app.utils.security import hash_password, verify_password, create_access_token
 from app.utils.email_sender import send_verification_email
 from app.config import APP_BASE_URL
-
 from app.utils.security import (
     hash_password,
     verify_password,
@@ -35,9 +33,11 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     new_user = User(
         email=user_data.email,
         username=user_data.username,
+        first_name=user_data.first_name,
+        last_name=user_data.last_name,
         password_hash=hashed_password,
         is_verified=False,
-        verification_token=verification_token
+        verification_token=verification_token,
     )
 
     db.add(new_user)
@@ -53,7 +53,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenResponse)
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(User.email == form_data.username).first()
 
@@ -72,8 +72,9 @@ def login(
 
     return {
         "access_token": access_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
     }
+
 
 @router.get("/verify-email")
 def verify_email(token: str, db: Session = Depends(get_db)):

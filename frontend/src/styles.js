@@ -1022,4 +1022,55 @@ export const styles = {
   error: {
     color: "crimson",
   },
+
+  chatHeaderLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    minWidth: 0,
+  },
+
+  chatHeaderAvatar: {
+    width: 40,
+    height: 40,
+    minWidth: 40,
+    borderRadius: "50%",
+    overflow: "hidden",
+    background: "#e2e8f0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  chatHeaderAvatarImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+
+  chatHeaderAvatarFallback: {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 16,
+    fontWeight: 700,
+    color: "#334155",
+  },
+
+  chatHeaderTitleWrap: {
+    minWidth: 0,
+    flex: 1,
+  },
+
+  chatHeaderTitle: {
+    margin: 0,
+    fontSize: 18,
+    fontWeight: 700,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
 };

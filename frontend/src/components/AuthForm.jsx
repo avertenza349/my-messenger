@@ -15,6 +15,8 @@ export default function AuthForm({
   const safeRegisterForm = registerForm || {
     email: "",
     username: "",
+    first_name: "",
+    last_name: "",
     password: "",
   };
 
@@ -39,6 +41,32 @@ export default function AuthForm({
       {mode === "register" ? (
         <form onSubmit={onRegister} style={styles.form}>
           <input
+            type="text"
+            placeholder="Имя"
+            value={safeRegisterForm.first_name}
+            onChange={(e) =>
+              setRegisterForm({
+                ...safeRegisterForm,
+                first_name: e.target.value,
+              })
+            }
+            style={styles.input}
+          />
+
+          <input
+            type="text"
+            placeholder="Фамилия"
+            value={safeRegisterForm.last_name}
+            onChange={(e) =>
+              setRegisterForm({
+                ...safeRegisterForm,
+                last_name: e.target.value,
+              })
+            }
+            style={styles.input}
+          />
+
+          <input
             type="email"
             placeholder="Email"
             value={safeRegisterForm.email}
@@ -50,6 +78,7 @@ export default function AuthForm({
             }
             style={styles.input}
           />
+
           <input
             type="text"
             placeholder="Username"
@@ -62,6 +91,7 @@ export default function AuthForm({
             }
             style={styles.input}
           />
+
           <input
             type="password"
             placeholder="Password"
@@ -74,6 +104,7 @@ export default function AuthForm({
             }
             style={styles.input}
           />
+
           <button type="submit" style={styles.button}>
             Зарегистрироваться
           </button>
