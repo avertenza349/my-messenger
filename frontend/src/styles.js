@@ -722,23 +722,18 @@ export const styles = {
   chatList: {
     display: "flex",
     flexDirection: "column",
-    alignItems: "stretch",
     gap: 8,
-    width: "100%",
   },
 
   chatItem: {
-    width: "100%",
-    display: "block",
-    boxSizing: "border-box",
-    textAlign: "left",
-    border: "1px solid #dbe2ea",
-    borderRadius: 10,
-    padding: "8px 10px",
-    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: 10,
+    borderRadius: 14,
+    border: "1px solid #cbd5e1",
     background: "#fff",
-    appearance: "none",
-    WebkitAppearance: "none",
+    minWidth: 0,
   },
 
   chatTitleRow: {
@@ -750,15 +745,16 @@ export const styles = {
   },
 
   chatAvatar: {
-    width: 48,
-    height: 48,
-    minWidth: 48,
+    width: 56,
+    height: 56,
+    minWidth: 56,
     borderRadius: "50%",
     overflow: "hidden",
     background: "#e2e8f0",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
 
   chatAvatarImage: {
@@ -774,8 +770,8 @@ export const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: 18,
-    fontWeight: 600,
+    fontSize: 24,
+    fontWeight: 700,
     color: "#334155",
   },
 
@@ -785,25 +781,28 @@ export const styles = {
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
-    gap: 4,
+    overflow: "hidden",
   },
 
   chatTopRow: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
     gap: 8,
+    minWidth: 0,
   },
 
   chatTitleText: {
+    flex: 1,
+    minWidth: 0,
     fontWeight: 600,
+    fontSize: 16,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
   },
-
   chatPreviewText: {
-    fontSize: 13,
+    marginTop: 4,
+    fontSize: 14,
     color: "#64748b",
     overflow: "hidden",
     textOverflow: "ellipsis",

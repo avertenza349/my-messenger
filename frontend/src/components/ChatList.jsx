@@ -105,7 +105,7 @@ export default function ChatList({
 
   return (
     <>
-      <div>
+      <div style={styles.chatList}>
         {safeChats.map((chat) => {
           const isSelected = selectedChat?.id === chat.id;
 
@@ -136,6 +136,7 @@ export default function ChatList({
               <div style={styles.chatInfo}>
                 <div style={styles.chatTopRow}>
                   <div style={styles.chatTitleText}>{getChatDisplayName(chat)}</div>
+
                   {chat.unread_count > 0 ? (
                     <span style={styles.chatUnreadBadge}>{chat.unread_count}</span>
                   ) : null}
