@@ -14,8 +14,10 @@ class CreateGroupChat(BaseModel):
 
 class ChatParticipantSchema(BaseModel):
     id: int
-    username: str
+    username: Optional[str] = None
     email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     avatar_url: Optional[str] = None
 
     class Config:

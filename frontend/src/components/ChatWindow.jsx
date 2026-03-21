@@ -48,6 +48,17 @@ function getFullAvatarUrl(avatarUrl) {
   return `http://127.0.0.1:8000${avatarUrl}`;
 }
 
+function getUserDisplayName(user) {
+  if (!user) return "Пользователь";
+
+  const fullName = [user.first_name, user.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return fullName || user.username || user.email || "Пользователь";
+}
+
 export default function ChatWindow({
   isMobile,
   selectedChat,
@@ -110,17 +121,14 @@ export default function ChatWindow({
       return (
         <img
           src={avatarUrl}
-          alt={otherParticipant?.username || "Аватар"}
+          alt={getUserDisplayName(otherParticipant)}
           style={styles.chatHeaderAvatarImage}
         />
       );
     }
 
-    const firstLetter = (
-      otherParticipant?.username?.[0] ||
-      getChatDisplayName(selectedChat)?.[0] ||
-      "U"
-    ).toUpperCase();
+    const firstLetter =
+      getUserDisplayName(otherParticipant)?.[0]?.toUpperCase() || "U";
 
     return <div style={styles.chatHeaderAvatarFallback}>{firstLetter}</div>;
   }
@@ -422,8 +430,7 @@ export default function ChatWindow({
                   >
                     {!isMine && (
                       <div style={styles.messageAuthor}>
-                        {usersMap[msg.sender_id]?.username ||
-                          `User #${msg.sender_id}`}
+                        {getUserDisplayName(usersMap[msg.sender_id])}
                       </div>
                     )}
 

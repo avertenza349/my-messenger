@@ -10,6 +10,17 @@ function getFullAvatarUrl(avatarUrl) {
   return `http://127.0.0.1:8000${avatarUrl}`;
 }
 
+function getUserDisplayName(user) {
+  if (!user) return "Пользователь";
+
+  const fullName = [user.first_name, user.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return fullName || user.username || user.email || "Пользователь";
+}
+
 export default function ChatList({
   chats,
   selectedChat,
@@ -67,7 +78,7 @@ export default function ChatList({
     }
 
     return (
-      chat.participants.find((participant) => participant.id !== currentUser?.id) ||
+      chat.participants.find((p) => p.id !== currentUser?.id) ||
       chat.participants[0]
     );
   }
@@ -77,24 +88,20 @@ export default function ChatList({
       return <div style={styles.chatAvatarFallback}>👥</div>;
     }
 
-    const otherParticipant = getOtherParticipant(chat);
-    const avatarUrl = getFullAvatarUrl(otherParticipant?.avatar_url);
+    const other = getOtherParticipant(chat);
+    const avatarUrl = getFullAvatarUrl(other?.avatar_url);
 
     if (avatarUrl) {
       return (
         <img
           src={avatarUrl}
-          alt={otherParticipant?.username || "Аватар"}
+          alt={getUserDisplayName(other)}
           style={styles.chatAvatarImage}
         />
       );
     }
 
-    const firstLetter = (
-      otherParticipant?.username?.[0] ||
-      getChatDisplayName(chat)?.[0] ||
-      "U"
-    ).toUpperCase();
+    const firstLetter = getUserDisplayName(other)[0]?.toUpperCase() || "U";
 
     return <div style={styles.chatAvatarFallback}>{firstLetter}</div>;
   }
@@ -135,10 +142,14 @@ export default function ChatList({
 
               <div style={styles.chatInfo}>
                 <div style={styles.chatTopRow}>
-                  <div style={styles.chatTitleText}>{getChatDisplayName(chat)}</div>
+                  <div style={styles.chatTitleText}>
+                    {getChatDisplayName(chat)}
+                  </div>
 
                   {chat.unread_count > 0 ? (
-                    <span style={styles.chatUnreadBadge}>{chat.unread_count}</span>
+                    <span style={styles.chatUnreadBadge}>
+                      {chat.unread_count}
+                    </span>
                   ) : null}
                 </div>
 
