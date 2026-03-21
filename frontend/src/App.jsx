@@ -96,8 +96,8 @@ export default function App() {
 
       const message =
         rawMessage.includes("404") ||
-        normalizedMessage.includes("not found") ||
-        normalizedMessage.includes("не найден")
+          normalizedMessage.includes("not found") ||
+          normalizedMessage.includes("не найден")
           ? "Пользователь не найден"
           : rawMessage || "Не удалось добавить контакт";
 
@@ -108,8 +108,20 @@ export default function App() {
 
   async function handleDeleteContact(userId) {
     try {
+      const wasSelectedDeletedPrivateChat =
+        chats.selectedChat &&
+        !chats.selectedChat.is_group &&
+        (chats.selectedChat.participants || []).some((p) => p.id === userId);
+
       await deleteContact(userId);
-      await loadContacts();
+      await Promise.all([loadContacts(), chats.loadChats()]);
+
+      if (wasSelectedDeletedPrivateChat) {
+        chats.setSelectedChat(null);
+        if (isMobile) {
+          setMobileView("chats");
+        }
+      }
 
       auth.setMessage("Контакт удалён");
       auth.setError("");

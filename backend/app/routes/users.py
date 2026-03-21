@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models.contact import Contact
 from app.models.user import User
+from app.models.chat import Chat, ChatParticipant
+from app.models.message import Message
 from app.schemas.user import ContactCreate, UserResponse
 from app.utils.security import get_current_user
 
@@ -102,6 +104,7 @@ def add_contact(
     current_user: User = Depends(get_current_user),
 ):
     user_to_add = db.query(User).filter(User.email == data.email).first()
+
     if not user_to_add:
         raise HTTPException(status_code=404, detail="Пользователь с такой почтой не найден")
 
@@ -147,7 +150,48 @@ def remove_contact(
     if not contact:
         raise HTTPException(status_code=404, detail="Контакт не найден")
 
+    # Удаляем контакт
     db.delete(contact)
+
+    # Ищем личный чат между current_user и contact_user_id
+    current_user_chat_ids = db.query(ChatParticipant.chat_id).filter(
+        ChatParticipant.user_id == current_user.id
+    ).all()
+    current_user_chat_ids = [item[0] for item in current_user_chat_ids]
+
+    chat_deleted = False
+
+    if current_user_chat_ids:
+        private_chats = (
+            db.query(Chat)
+            .filter(
+                Chat.id.in_(current_user_chat_ids),
+                Chat.is_group == False,
+            )
+            .all()
+        )
+
+        for chat in private_chats:
+            participants = (
+                db.query(ChatParticipant)
+                .filter(ChatParticipant.chat_id == chat.id)
+                .all()
+            )
+            participant_ids = sorted([p.user_id for p in participants])
+
+            if participant_ids == sorted([current_user.id, contact_user_id]):
+                db.query(Message).filter(Message.chat_id == chat.id).delete()
+                db.query(ChatParticipant).filter(
+                    ChatParticipant.chat_id == chat.id
+                ).delete()
+                db.delete(chat)
+                chat_deleted = True
+                break
+
     db.commit()
 
-    return {"ok": True, "message": "Контакт удалён"}
+    return {
+        "ok": True,
+        "message": "Контакт удалён",
+        "chat_deleted": chat_deleted,
+    }
