@@ -167,12 +167,23 @@ def build_chat_response(chat: Chat, db: Session):
         .all()
     )
 
-    last_message = (
+    last_message_obj = (
         db.query(Message)
         .filter(Message.chat_id == chat.id)
         .order_by(Message.created_at.desc())
         .first()
     )
+
+    last_message = None
+    if last_message_obj:
+        last_message = {
+            "id": last_message_obj.id,
+            "sender_id": last_message_obj.sender_id,
+            "content": last_message_obj.content or (
+                "📷 Изображение" if last_message_obj.message_type == "image" else ""
+            ),
+            "created_at": last_message_obj.created_at,
+        }
 
     return {
         "id": chat.id,
